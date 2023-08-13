@@ -4,19 +4,19 @@
 
 #define printText(Text) if(GEngine){GEngine->AddOnScreenDebugMessage(-1, 20.0f , FColor::Yellow, TEXT(Text),true);}
 
-//print("Some message");
+//printText("Some message");
 
 
 #define print(Format, ...) if(GEngine){GEngine->AddOnScreenDebugMessage(1, 2.0f, FColor::Yellow, FString::Printf(TEXT(Format), ##__VA_ARGS__), false);}
 
 //float Yaw;
-//printf("var value is: %f, Yaw);
+//print("var value is: %f, Yaw);
 
 //int num;
-//printf("int value is: %d, num);
+//print("int value is: %d, num);
 
 //string TestString(TEXT("TestString"));
-//printf("string value is: %s, *TestString);
+//print("string value is: %s, *TestString);
 
 
 #define SuperLog(Format, Duration, Color, ...) if(GEngine){GEngine->AddOnScreenDebugMessage(-1, Duration, Color , FString::Printf(TEXT(Format), ##__VA_ARGS__), false);}
