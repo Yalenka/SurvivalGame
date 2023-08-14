@@ -67,7 +67,7 @@ protected:
 
 	//Try Get Pawn Owner, this is a pawn and character refference
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Refferences | Pawn")
-		ASurvivalCharacter* TryGetPawnOwnerRef;
+		ASurvivalCharacter* Character;
 
 	//GamePlay variables
 	//Defining speed of the character

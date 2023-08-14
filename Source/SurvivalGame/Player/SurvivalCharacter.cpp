@@ -159,6 +159,9 @@ void ASurvivalCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME_CONDITION(ASurvivalCharacter, LootSource, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(ASurvivalCharacter, Health, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(ASurvivalCharacter, bIsAiming, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(ASurvivalCharacter, PlayerPitch, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(ASurvivalCharacter, PlayerYaw, COND_SkipOwner);
+
 }
 
 bool ASurvivalCharacter::IsInteracting() const
@@ -691,22 +694,6 @@ void ASurvivalCharacter::MoveRight(float Val)
 	}
 }
 
-void ASurvivalCharacter::LookUp(float Val)
-{
-	if (Val != 0.f)
-	{
-		AddControllerPitchInput(Val);
-	}
-}
-
-void ASurvivalCharacter::Turn(float Val)
-{
-	if (Val != 0.f)
-	{
-		AddControllerYawInput(Val);
-	}
-}
-
 bool ASurvivalCharacter::CanAim() const
 {
 	return EquippedWeapon != nullptr;
@@ -738,6 +725,46 @@ void ASurvivalCharacter::SetAiming(const bool bNewAiming)
 	}
 
 	bIsAiming = bNewAiming;
+}
+
+void ASurvivalCharacter::LookUp(float Pitch)
+{
+	if (Controller == nullptr) { return; }
+
+	AddControllerPitchInput((Pitch));
+	FRotator NormalizedRotation = GetControlRotation() - GetActorRotation().GetNormalized();
+	//PlayerPitch = NormalizedRotation.Pitch;
+	ServerSet_PlayerPitch(NormalizedRotation.Pitch);
+}
+
+void ASurvivalCharacter::Turn(float Yaw)
+{
+	if (Controller == nullptr) { return; }
+
+	AddControllerYawInput(Yaw);
+	FRotator NormalizedRotation = GetControlRotation() - GetActorRotation().GetNormalized();
+	//PlyerYaw = NormalizedRotation.Yaw;
+	ServerSet_PlayerYaw(NormalizedRotation.Yaw);
+}
+
+void ASurvivalCharacter::ServerSet_PlayerYaw_Implementation(float Yaw)
+{
+	PlayerYaw = Yaw;
+}
+
+bool ASurvivalCharacter::ServerSet_PlayerYaw_Validate(float Yaw)
+{
+	return true;
+}
+
+void ASurvivalCharacter::ServerSet_PlayerPitch_Implementation(float Pitch)
+{
+	PlayerPitch = Pitch;
+}
+
+bool ASurvivalCharacter::ServerSet_PlayerPitch_Validate(float Pitch)
+{
+	return true;
 }
 
 void ASurvivalCharacter::ServerSetAiming_Implementation(const bool bNewAiming)

@@ -346,9 +346,6 @@ public:
 	void MoveForward(float Val);
 	void MoveRight(float Val);
 
-	void LookUp(float Val);
-	void Turn(float Val);
-
 public:	
 
 	void StartReload();
@@ -446,5 +443,21 @@ protected:
 	FRotator AltReleasedRotation;
 	FRotator AltControllerRotation;
 	bool bEnableMove = true;
+
+public:
+	/**
+	* Replication of Looking-UpDown and Looking-LeftRight
+	*/
+	void LookUp(float Pitch);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerSet_PlayerPitch(float Pitch);
+	UPROPERTY(Replicated)
+	float PlayerPitch;
+
+	void Turn(float Yaw);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerSet_PlayerYaw(float Yaw);
+	UPROPERTY(Replicated)
+	float PlayerYaw;
 
 };

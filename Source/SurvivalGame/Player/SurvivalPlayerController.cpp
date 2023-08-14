@@ -66,6 +66,13 @@ void ASurvivalPlayerController::SetupInputComponent()
 void ASurvivalPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	ptr_Character = Cast<ASurvivalCharacter>(GetPawn());
+	if (!ptr_Character)
+	{
+		print("ASurvivalCharacter cast failed #ASurvivalPlayerController::BeginPlay()");
+		return;
+	}
 }
 
 void ASurvivalPlayerController::ClientShotHitConfirmed_Implementation()
@@ -74,6 +81,7 @@ void ASurvivalPlayerController::ClientShotHitConfirmed_Implementation()
 	{
 		HUD->ShowHitmarker();
 	}
+
 }
 
 void ASurvivalPlayerController::Respawn()
@@ -194,8 +202,10 @@ void ASurvivalPlayerController::Turn(float Rate)
 	RecoilResetAmount.X = FMath::FInterpTo(RecoilResetAmount.X, 0.f, GetWorld()->DeltaTimeSeconds, CurrentRecoilResetSpeed);
 	AddYawInput(LastRecoilResetAmount.X - RecoilResetAmount.X);
 
-	AddYawInput(Rate);
-
+	if (ptr_Character)
+	{
+		ptr_Character->Turn(Rate);
+	}
 }
 
 void ASurvivalPlayerController::LookUp(float Rate)
@@ -226,7 +236,10 @@ void ASurvivalPlayerController::LookUp(float Rate)
 	RecoilResetAmount.Y = FMath::FInterpTo(RecoilResetAmount.Y, 0.f, GetWorld()->DeltaTimeSeconds, CurrentRecoilResetSpeed);
 	AddPitchInput(LastRecoilResetAmount.Y - RecoilResetAmount.Y);
 
-	AddPitchInput(Rate);
+	if (ptr_Character)
+	{
+		ptr_Character->LookUp(Rate);
+	}
 }
 
 void ASurvivalPlayerController::StartReload()

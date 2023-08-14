@@ -31,6 +31,7 @@ public:
 	
 	UFUNCTION(Client, Reliable, BlueprintCallable)
 	void ClientShowNotification(const FText& Message);
+	class ASurvivalCharacter* ptr_Character;
 
 protected:
 

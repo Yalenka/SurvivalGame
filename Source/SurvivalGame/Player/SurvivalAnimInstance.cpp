@@ -17,13 +17,13 @@ USurvivalAnimInstance::USurvivalAnimInstance()
 void USurvivalAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
-	TryGetPawnOwnerRef = Cast<ASurvivalCharacter>(TryGetPawnOwner());
+	Character = Cast<ASurvivalCharacter>(TryGetPawnOwner());
 }
 
 void USurvivalAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
-	if (TryGetPawnOwnerRef/* && TryGetPawnOwnerRef->IsLocallyControlled()*/)
+	if (Character/* && TryGetPawnOwnerRef->IsLocallyControlled()*/)
 	{
 		UpdateAnimProperties();
 	}
@@ -46,10 +46,10 @@ void USurvivalAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 void USurvivalAnimInstance::UpdateAnimProperties()
 {
-	bCrouching_Anim = TryGetPawnOwnerRef->GetCrouching();
-	bProning_Anim = TryGetPawnOwnerRef->GetProne();
-	bDead_Anim = TryGetPawnOwnerRef->GetDead();
-	Weapon = TryGetPawnOwnerRef->GetEquippedWeapon();
+	bCrouching_Anim = Character->GetCrouching();
+	bProning_Anim = Character->GetProne();
+	bDead_Anim = Character->GetDead();
+	Weapon = Character->GetEquippedWeapon();
 
 	if (Weapon != nullptr)
 	{
@@ -60,38 +60,40 @@ void USurvivalAnimInstance::UpdateAnimProperties()
 		bHoldWeapon_Anim = false;
 	}
 
-	bAiming_Anim = TryGetPawnOwnerRef->GetAiming();
+	bAiming_Anim = Character->GetAiming();
 	//bHoldWeapon_Anim = TryGetPawnOwnerRef->GetHoldWeapon();
 
-	bAltPressed_Anim = TryGetPawnOwnerRef->GetAltPressed();
-	bWalkPressed_Anim = TryGetPawnOwnerRef->GetWalkPressed();
-	bRunPressed_Anim = TryGetPawnOwnerRef->GetRunPressed();
-	bPlayingMontage_Anim = TryGetPawnOwnerRef->GetPlayingMontage();
-	bEnableMove_Anim = TryGetPawnOwnerRef->GetEnableMove();
+	bAltPressed_Anim = Character->GetAltPressed();
+	bWalkPressed_Anim = Character->GetWalkPressed();
+	bRunPressed_Anim = Character->GetRunPressed();
+	bPlayingMontage_Anim = Character->GetPlayingMontage();
+	bEnableMove_Anim = Character->GetEnableMove();
 
 	//bOnTheAir_Anim = TryGetPawnOwnerRef->GetMovementComponent()->IsFalling();
-	bInAir_Anim = TryGetPawnOwnerRef->GetMovementComponent()->IsFalling();
+	bInAir_Anim = Character->GetMovementComponent()->IsFalling();
 
-	ForwardValue = TryGetPawnOwnerRef->GetMoveForwardAxis();
+	ForwardValue = Character->GetMoveForwardAxis();
 
 	/*Set speed value from anim bp on character and detect if falling then do a jump*/
 	//Set 'IsInAir' (used in state machine)
-	FVector BreakUnRotator = TryGetPawnOwnerRef->GetActorRotation().UnrotateVector(TryGetPawnOwnerRef->GetVelocity());
+	FVector BreakUnRotator = Character->GetActorRotation().UnrotateVector(Character->GetVelocity());
 	SidewaysVelocity = BreakUnRotator.Y;
 	
 	//Setting 'Speed' (use in 1D blend space)
-	Speed = TryGetPawnOwnerRef->GetVelocity().Size();
+	Speed = Character->GetVelocity().Size();
 
 	//Set Direction Variable from anim bp on character
-	Direction = CalculateDirection(TryGetPawnOwnerRef->GetVelocity(), TryGetPawnOwnerRef->GetActorRotation());
+	Direction = CalculateDirection(Character->GetVelocity(), Character->GetActorRotation());
 	
 	//Set Pitch and Yaw Variable
-	FRotator BreakDeltaRotator = TryGetPawnOwnerRef->GetControlRotation() - TryGetPawnOwnerRef->GetActorRotation();
-	BreakDeltaRotator.Normalize();
-	Pitch = BreakDeltaRotator.Pitch;
-	Yaw = BreakDeltaRotator.Yaw;
+	//FRotator BreakDeltaRotator = TryGetPawnOwnerRef->GetControlRotation() - TryGetPawnOwnerRef->GetActorRotation();
+	//BreakDeltaRotator.Normalize();
+	//Pitch = BreakDeltaRotator.Pitch;
+	//Yaw = BreakDeltaRotator.Yaw;
 
-	printf("Turn Rate: %f", Yaw);
+	/**Getting/Setting replicated normalized values from character class*/
+	Pitch = Character->PlayerPitch;
+	Yaw = Character->PlayerYaw;
 
 	//Set AimOffset Types Values
 	if (bProning_Anim | bInAir_Anim)
