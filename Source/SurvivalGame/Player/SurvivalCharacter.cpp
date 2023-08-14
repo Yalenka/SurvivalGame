@@ -732,7 +732,7 @@ void ASurvivalCharacter::LookUp(float Pitch)
 	if (Controller == nullptr) { return; }
 
 	AddControllerPitchInput((Pitch));
-	FRotator NormalizedRotation = GetControlRotation() - GetActorRotation().GetNormalized();
+	FRotator NormalizedRotation = (GetControlRotation() - GetActorRotation()).GetNormalized();
 	//PlayerPitch = NormalizedRotation.Pitch;
 	ServerSet_PlayerPitch(NormalizedRotation.Pitch);
 }
@@ -742,7 +742,7 @@ void ASurvivalCharacter::Turn(float Yaw)
 	if (Controller == nullptr) { return; }
 
 	AddControllerYawInput(Yaw);
-	FRotator NormalizedRotation = GetControlRotation() - GetActorRotation().GetNormalized();
+	FRotator NormalizedRotation = (GetControlRotation() - GetActorRotation()).GetNormalized();
 	//PlyerYaw = NormalizedRotation.Yaw;
 	ServerSet_PlayerYaw(NormalizedRotation.Yaw);
 }
