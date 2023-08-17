@@ -45,8 +45,10 @@ ASurvivalCharacter::ASurvivalCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>("SpringArmComponent");
-	SpringArmComponent->SetupAttachment(GetMesh(), FName("CameraSocket"));
-	SpringArmComponent->TargetArmLength = 0.f;
+	SpringArmComponent->SetupAttachment(RootComponent);
+	SpringArmComponent->SetRelativeLocation(FVector(90.0f, 30.0f, 120.0f));
+	SpringArmComponent->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+	SpringArmComponent->TargetArmLength = 210.0f;
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->SetupAttachment(SpringArmComponent);
@@ -154,6 +156,8 @@ void ASurvivalCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 
 	DOREPLIFETIME(ASurvivalCharacter, bSprinting);
 	DOREPLIFETIME(ASurvivalCharacter, EquippedWeapon);
+	DOREPLIFETIME(ASurvivalCharacter, WeaponOne_1);
+	DOREPLIFETIME(ASurvivalCharacter, WeaponTwo_2);
 	DOREPLIFETIME(ASurvivalCharacter, Killer);
 
 	DOREPLIFETIME_CONDITION(ASurvivalCharacter, LootSource, COND_OwnerOnly);
@@ -303,26 +307,27 @@ void ASurvivalCharacter::EquipWeapon(class UWeaponItem* WeaponItem)
 {
 	if (WeaponItem && WeaponItem->WeaponClass && HasAuthority())
 	{
-		if (EquippedWeapon)
-		{
-			UnEquipWeapon();
-		}
+		//if (EquippedWeapon)
+		//{
+		//	UnEquipWeapon();
+		//}
 
-		//Spawn the weapon in
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.bNoFail = true;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-		SpawnParams.Owner = SpawnParams.Instigator = this;
+		////Spawn the weapon in
+		//FActorSpawnParameters SpawnParams;
+		//SpawnParams.bNoFail = true;
+		//SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+		//SpawnParams.Owner = SpawnParams.Instigator = this;
 
-		if (AWeapon* Weapon = GetWorld()->SpawnActor<AWeapon>(WeaponItem->WeaponClass, SpawnParams))
-		{
-			Weapon->Item = WeaponItem;
+		//if (AWeapon* Weapon = GetWorld()->SpawnActor<AWeapon>(WeaponItem->WeaponClass, SpawnParams))
+		//{
+		//	Weapon->Item = WeaponItem;
 
-			EquippedWeapon = Weapon;
-			OnRep_EquippedWeapon();
+		//	EquippedWeapon = Weapon;
+		//	OnRep_EquippedWeapon();
 
-			Weapon->OnEquip();
-		}
+		//	Weapon->OnEquip();
+		//}
+		PickupWeapon(WeaponItem, false, EWeaponPosition::E_Left);
 	}
 }
 
@@ -344,6 +349,29 @@ class USkeletalMeshComponent* ASurvivalCharacter::GetSlotSkeletalMeshComponent(c
 		return *PlayerMeshes.Find(Slot);
 	}
 	return nullptr;
+}
+
+void ASurvivalCharacter::SetEquippedWeapon(AWeapon* WeaponToSet)
+{
+	EquippedWeapon = WeaponToSet;
+	if (EquippedWeapon) {
+		OnWeaponChanged.Broadcast(GetEquippedWeapon(), GetEquippedWeapon()->Position, 1);
+	}
+	else {
+		OnWeaponChanged.Broadcast(EquippedWeapon, EWeaponPosition::E_Left, 1);
+	}
+}
+
+void ASurvivalCharacter::SetWeaponOne_1(AWeapon* WeaponToSet)
+{
+	WeaponOne_1 = WeaponToSet;
+	OnWeaponChanged.Broadcast(WeaponOne_1, EWeaponPosition::E_Left, 0);
+}
+
+void ASurvivalCharacter::SetWeaponOne_2(AWeapon* WeaponToSet)
+{
+	WeaponTwo_2 = WeaponToSet;
+	OnWeaponChanged.Broadcast(WeaponTwo_2, EWeaponPosition::E_Right, 0);
 }
 
 class UThrowableItem* ASurvivalCharacter::GetThrowable() const
@@ -477,6 +505,22 @@ void ASurvivalCharacter::OnRep_EquippedWeapon()
 	if (EquippedWeapon)
 	{
 		EquippedWeapon->OnEquip();
+	}
+}
+
+void ASurvivalCharacter::OnRep_WeapnOne_1()
+{
+	if (GetWeaponOne_1())
+	{
+		GetWeaponOne_1()->OnEquip();
+	}
+}
+
+void ASurvivalCharacter::OnRep_WeapnOne_2()
+{
+	if (GetWeaponTwo_2())
+	{
+		GetWeaponTwo_2()->OnEquip();
 	}
 }
 
@@ -745,6 +789,219 @@ void ASurvivalCharacter::Turn(float Yaw)
 	FRotator NormalizedRotation = (GetControlRotation() - GetActorRotation()).GetNormalized();
 	//PlyerYaw = NormalizedRotation.Yaw;
 	ServerSet_PlayerYaw(NormalizedRotation.Yaw);
+}
+
+void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAssign, EWeaponPosition Position)
+{
+	if (WeaponItem && WeaponItem->WeaponClass && HasAuthority())
+	{
+		EWeaponPosition TargetPosition{};
+		bool bTargetIsOnHand{};
+
+		//Assign the position for the weapon
+		if (bIsAssign)
+		{
+			AssignPosition(Position, TargetPosition, bTargetIsOnHand);
+			print("Manual Position Assigned");
+		}
+		else
+		{
+			TargetPosition = AutoPosition(bTargetIsOnHand);
+			print("Auto Position Assigned");
+		}
+
+		//Get Weapon object that needs to be replaced
+		AWeapon* ReplaceWeapon = nullptr;
+		if (bTargetIsOnHand)
+		{
+			if (GetEquippedWeapon())
+			{
+				ReplaceWeapon = GetEquippedWeapon();
+				print("HOld Gun is valid");
+			}
+			else
+			{
+				print("Hold gun is not valid");
+			}
+		}
+		else {
+			switch (TargetPosition)
+			{
+			case EWeaponPosition::E_Left:
+				if (GetWeaponOne_1())
+				{
+					ReplaceWeapon = GetWeaponOne_1();
+				}
+				break;
+			case EWeaponPosition::E_Right:
+				if (GetWeaponTwo_2()) {
+					ReplaceWeapon = GetWeaponTwo_2();
+				}
+				break;
+			case EWeaponPosition::E_Pan:
+				break;
+			case EWeaponPosition::E_Grenade:
+				break;
+			case EWeaponPosition::E_MAX:
+				break;
+			default:
+				break;
+			}
+		}
+		if (ReplaceWeapon)
+		{
+			//DropItem(ReplaceWeapon->Item, ReplaceWeapon->Item->GetQuantity());
+
+			PlayerInventory->ConsumeItem(ReplaceWeapon->Item, ReplaceWeapon->Item->GetQuantity());
+
+			//DiscardWeapon(ReplaceWeapon);
+		}
+
+		//Spawn the weapon in
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.bNoFail = true;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+		SpawnParams.Owner = SpawnParams.Instigator = this;
+
+		if (AWeapon* Weapon = GetWorld()->SpawnActor<AWeapon>(WeaponItem->WeaponClass, SpawnParams))
+		{
+			if (bTargetIsOnHand)
+			{
+				SetEquippedWeapon(Weapon);
+				GetEquippedWeapon()->Item = WeaponItem;
+				OnRep_EquippedWeapon();
+				GetEquippedWeapon()->OnEquip();
+			}
+			else
+			{
+				switch (TargetPosition)
+				{
+				case EWeaponPosition::E_Left:
+					SetWeaponOne_1(Weapon);
+					GetWeaponOne_1()->Item = WeaponItem;
+					OnRep_WeapnOne_1();
+					GetWeaponOne_1()->OnEquip();
+					break;
+				case EWeaponPosition::E_Right:
+					SetWeaponOne_2(Weapon);
+					GetWeaponTwo_2()->Item = WeaponItem;
+					OnRep_WeapnOne_2();
+					GetWeaponTwo_2()->OnEquip();
+					break;
+				case EWeaponPosition::E_MAX:
+
+					break;
+				default:
+					break;
+				}
+			}
+		}
+	}
+}
+
+void ASurvivalCharacter::AssignPosition(const EWeaponPosition& Assign, EWeaponPosition& Position, bool& bIsOnHand)
+{
+	if (GetEquippedWeapon()) {
+		if (GetEquippedWeapon()->Position == Assign) {
+			Position = Assign;
+			bIsOnHand = 1;
+		}
+		else {
+			Position = Assign;
+			bIsOnHand = 0;
+		}
+	}
+	else {
+		Position = Assign;
+		bIsOnHand = 0;
+	}
+}
+
+EWeaponPosition ASurvivalCharacter::AutoPosition(bool& bIsOnHand)
+{
+	int32 CurrentAmount = 0;
+	if (GetWeaponOne_1())
+	{
+		//CurrentAmount += 1;
+		CurrentAmount++;
+	}
+
+	if (GetWeaponTwo_2())
+	{
+		//CurrentAmount += 1;
+		CurrentAmount++;
+	}
+
+	if (GetEquippedWeapon())
+	{
+		//CurrentAmount += 1;
+		CurrentAmount++;
+	}
+
+	if (CurrentAmount == 0)
+	{
+		bIsOnHand = 1;
+		return EWeaponPosition::E_Left;
+	}
+	else
+	{
+		if (CurrentAmount < 2) {
+			if (GetEquippedWeapon()) {
+				switch (GetEquippedWeapon()->Position) {
+				case EWeaponPosition::E_Left:
+					bIsOnHand = 0;
+					return EWeaponPosition::E_Right;
+					break;
+				case EWeaponPosition::E_Right:
+					bIsOnHand = 0;
+					return EWeaponPosition::E_Left;
+					break;
+				case EWeaponPosition::E_MAX:
+					break;
+				default:
+					break;
+				}
+			}
+			else {
+				if (GetWeaponOne_1()) {
+					bIsOnHand = 0;
+					return EWeaponPosition::E_Right;
+
+				}
+				else {
+					bIsOnHand = 0;
+					return EWeaponPosition::E_Left;
+				}
+			}
+		}
+		else {
+			if (GetEquippedWeapon()) {
+				switch (GetEquippedWeapon()->Position) {
+				case EWeaponPosition::E_Left:
+					bIsOnHand = 1;
+					return EWeaponPosition::E_Left;
+
+					break;
+				case EWeaponPosition::E_Right:
+					bIsOnHand = 1;
+					return EWeaponPosition::E_Right;
+
+					break;
+				case EWeaponPosition::E_MAX:
+					break;
+				default:
+					break;
+				}
+			}
+			else {
+				bIsOnHand = 0;
+				return EWeaponPosition::E_Left;
+
+			}
+		}
+	}
+
+	return EWeaponPosition::E_MAX;
 }
 
 void ASurvivalCharacter::ServerSet_PlayerYaw_Implementation(float Yaw)

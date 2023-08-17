@@ -94,6 +94,130 @@ void AWeapon::Destroyed()
 	StopSimulatingWeaponFire();
 }
 
+FName AWeapon::CalculateHoldGunSocket()
+{
+	if (!PawnOwner)
+	{
+		print("Pawn owner not valid in AWeapon::CalculateHoldGunSocket");
+		return FName();
+	}
+	if (PawnOwner)
+	{
+		if (const USkeletalMeshComponent* PawnMesh = PawnOwner->GetMesh())
+		{
+			if (PawnOwner->GetProne())
+			{
+				if (PawnOwner->GetMoveForwardAxis() == 0.f && PawnOwner->GetMoveRightAxis() == 0.f)
+				{
+					GunSocket = GunProneIdleName; print("Socket name is GunProneIdleName ");
+
+				}
+				else
+				{
+					if (PawnOwner->GetMoveRightAxis() == 0.f)
+					{
+						GunSocket = GunProneFBName; print("Socket name is GunProneFBName ");
+					}
+					else
+					{
+						GunSocket = GunProneOtherName; print("Socket name is GunProneOtherName ");
+					}
+				}
+			}
+			else
+			{
+				if (PawnOwner->GetCrouching() && !PawnOwner->GetAiming())
+				{
+					GunSocket = GunCrouchIdleName; print("Socket name is GunCrouchIdleName ");
+				}
+				else
+				{
+					if (PawnOwner->GetAiming() || PawnOwner->GetFiring())
+					{
+						GunSocket = GunStandAimName; print("Socket name is GunStandAimName ");
+					}
+					else
+					{
+						if (PawnOwner->GetReload())
+						{
+							GunSocket = GunReloadName;
+						}
+						else
+						{
+							GunSocket = GunStandIdleName; print("Socket name is GunStandIdleName ");
+						}
+					}
+				}
+			}
+		}
+	}
+	return GunSocket;
+}
+
+void AWeapon::UpdateWeaponDisplay(FName HoldSocket)
+{
+	if (PawnOwner)
+	{
+		if (const USkeletalMeshComponent* PawnMesh = PawnOwner->GetMesh())
+		{
+			if (!PawnOwner->GetAiming())
+			{
+				if (HoldSocket != "None")
+				{
+					if (PawnOwner->GetEquippedWeapon())
+					{
+						AttachMeshToPawn(HoldSocket);
+						//print("Weapon hold");
+					}
+				}
+			}
+
+			bool bIsEquipBackpack = 0;
+			//TArray<AItemBase*> Equipments = PlayerStateRef->GetEquipments();
+			if (PawnOwner->GetEquippedItems().Num() != 0)
+			{
+				TArray<UEquippableItem*>Equipables;
+				PawnOwner->GetEquippedItems().GenerateValueArray(Equipables);
+				for (auto& Equipment : Equipables)
+				{
+					if (Equipment->ItemType == EItemType::E_BackPack)
+					{
+						bIsEquipBackpack = 1;
+					}
+				}
+
+			}
+			if (PawnOwner->GetWeaponOne_1())
+			{
+				if (bIsEquipBackpack) {
+					AttachMeshToPawn(BackLeftBName);
+					//print("Weapon Left 1 b");
+				}
+				else
+				{
+					AttachMeshToPawn(BackLeftNName);
+					//print("Weapon hold 1 n");
+				}
+
+			}
+			if (PawnOwner->GetWeaponTwo_2())
+			{
+				if (bIsEquipBackpack)
+				{
+					AttachMeshToPawn(BackRightBName);
+					//print("Weapon hold 2 b");
+				}
+				else
+				{
+					AttachMeshToPawn(BackRightNName);
+					//print("Weapon hold 2 n");
+				}
+
+			}
+		}
+	}
+}
+
 void AWeapon::UseClipAmmo()
 {
 	if (HasAuthority())
@@ -134,7 +258,7 @@ void AWeapon::ReturnAmmoToInventory()
 
 void AWeapon::OnEquip()
 {
-	AttachMeshToPawn();
+	UpdateWeaponDisplay(CalculateHoldGunSocket());
 
 	bPendingEquip = true;
 	DetermineWeaponState();
@@ -150,7 +274,7 @@ void AWeapon::OnEquip()
 
 void AWeapon::OnEquipFinished()
 {
-	AttachMeshToPawn();
+	UpdateWeaponDisplay(CalculateHoldGunSocket());
 
 	bIsEquipped = true;
 	bPendingEquip = false;
@@ -731,13 +855,13 @@ void AWeapon::DetermineWeaponState()
 	SetWeaponState(NewState);
 }
 
-void AWeapon::AttachMeshToPawn()
+void AWeapon::AttachMeshToPawn(FName SocksName)
 {
 	if (PawnOwner)
 	{
 		if (const USkeletalMeshComponent* PawnMesh = PawnOwner->GetMesh())
 		{
-			const FName AttachSocket = PawnOwner->IsLocallyControlled() ? AttachSocket1P : AttachSocket3P;
+			const FName AttachSocket = PawnOwner->IsLocallyControlled() ? SocksName : SocksName;
 			AttachToComponent(PawnOwner->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocket);
 		}
 	}

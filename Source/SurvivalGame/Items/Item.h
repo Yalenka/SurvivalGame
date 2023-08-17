@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Utilities/Structures/SurvivalEnums.h"
 #include "Item.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemModified);
@@ -121,6 +122,9 @@ public:
 
 	/**Mark the object as needing replication. We must call this internally after modifying any replicated properties*/
 	void MarkDirtyForReplication();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "ItemType")
+	EItemType ItemType;
 
 protected:
 

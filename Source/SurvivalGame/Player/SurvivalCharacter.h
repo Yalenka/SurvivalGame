@@ -9,6 +9,7 @@
 #include "../Utilities/Structures/ST_WalkSpeed.h"
 #include "../Utilities/Structures/ST_MoveTimeDelay.h"
 #include "../Utilities/Structures/ST_CameraHeight.h"
+#include "Utilities/Structures/SurvivalEnums.h"
 
 #include "SurvivalCharacter.generated.h"
 
@@ -37,8 +38,19 @@ struct FInteractionData
 	bool bInteractHeld;
 
 };
-
+///** Weapon Positions enum on character*/
+//UENUM(BlueprintType)
+//enum class EWeaponPosition : uint8
+//{
+//	E_Left UMETA(DisplayName = "LeftPosition"),
+//	E_Right UMETA(DisplayName = "RightPosition"),
+//	E_Pan UMETA(DisplayName = "PanPosition"),
+//	E_Grenade UMETA(DisplayName = "GrenadePosition"),
+//	E_MAX UMETA(DisplayName = "EmptyPosition")
+//
+//};
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEquippedItemsChanged, const EEquippableSlot, Slot, const UEquippableItem*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnWeaponChangedSignature, class AWeapon*, Weapon, EWeaponPosition, Position, bool, bIsOnHand);
 
 UCLASS()
 class SURVIVALGAME_API ASurvivalCharacter : public ACharacter
@@ -233,6 +245,20 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Weapons")
 	FORCEINLINE class AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
+	void SetEquippedWeapon(AWeapon* WeaponToSet);
+
+	/**An extra function Used by rebus in blueprints animation to to check if we have a weapon or not, but I will use CPP anim instance to determine it*/
+	UFUNCTION(BlueprintCallable, Category = "Weapons")
+	FORCEINLINE class AWeapon* GetWeaponOne_1() const { return WeaponOne_1; }
+	void SetWeaponOne_1(AWeapon* WeaponToSet);
+
+	/**An extra function Used by rebus in blueprints animation to to check if we have a weapon or not, but I will use CPP anim instance to determine it*/
+	UFUNCTION(BlueprintCallable, Category = "Weapons")
+	FORCEINLINE class AWeapon* GetWeaponTwo_2() const { return WeaponTwo_2; }
+	void SetWeaponOne_2(AWeapon* WeaponToSet);
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnWeaponChangedSignature OnWeaponChanged;
 
 protected:
 
@@ -272,9 +298,16 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_EquippedWeapon)
 	class AWeapon* EquippedWeapon;
-
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_WeapnOne_1)
+	class AWeapon* WeaponOne_1;
+	UFUNCTION()
+	void OnRep_WeapnOne_1();
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_WeapnOne_2)
+	class AWeapon* WeaponTwo_2;
+	UFUNCTION()
+	void OnRep_WeapnOne_2();
 
 	void StartFire();
 	void StopFire();
@@ -422,7 +455,18 @@ public:
 	FORCEINLINE void SetDead(bool NewValue) { bDead = NewValue; }
 	FORCEINLINE bool GetDead() const { return bDead; }
 
+	FORCEINLINE void Setfiring(bool NewValue) { bfiring = NewValue; }
+	FORCEINLINE bool GetFiring() const { return bfiring; }
+
+	FORCEINLINE void SetReload(bool NewValue) { breload = NewValue; }
+	FORCEINLINE bool GetReload() const { return breload; }
+
 protected:
+
+	/**Note: These variables are not replicated, if you want to reflect other clients, replicate them by using onrep method*/
+	bool bfiring;
+	bool breload;
+
 	UPROPERTY(Transient, Replicated)
 	bool bIsAiming;
 	UPROPERTY(Transient, Replicated)
@@ -460,4 +504,7 @@ public:
 	UPROPERTY(Replicated)
 	float PlayerYaw;
 
+	void PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAssign, EWeaponPosition Position);
+	void AssignPosition(const EWeaponPosition& Assign, EWeaponPosition& Position, bool& bIsOnHand);
+	EWeaponPosition AutoPosition(bool& bIsOnHand);
 };

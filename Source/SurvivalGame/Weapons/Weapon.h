@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "SurvivalDamageTypes.h"
+#include "Utilities/Structures/SurvivalEnums.h"
 #include "Weapon.generated.h"
 
 class UAnimMontage;
@@ -119,6 +120,40 @@ public:
 	virtual void PostInitializeComponents() override;
 	virtual void BeginPlay() override;
 	virtual void Destroyed() override;
+	UPROPERTY(BlueprintReadOnly, Category = "Weapon", meta = (ExposeOnSpawn = true))
+	EWeaponPosition Position;
+	FName CalculateHoldGunSocket();
+	void UpdateWeaponDisplay(FName HoldSocket);
+
+	UPROPERTY(EditDefaultsOnly, Category = Sockets)
+	FName GunSocket;
+
+	FName GunStandIdleName = FName(TEXT("Socket_Gun_Stand"));
+	FName GunStandAimName = FName(TEXT("Socket_Stand_Aim"));
+	FName GunStandFireName = FName(TEXT("Socket_Rifle_Stand_Fire"));
+
+	FName GunCrouchIdleName = FName(TEXT("Socket_Gun_Crouch"));
+	FName GunCrouchAimName = FName(TEXT("Socket_Rifle_Crouch_Aim"));
+	FName GunCrouchFireName = FName(TEXT("Socket_Rifle_Crouch_Fire"));
+
+	FName GunProneIdleName = FName(TEXT("Socket_Gun_ProneIdle"));
+	FName GunProneAimName = FName(TEXT("Socket_Rifle_Prone_Aim"));
+	FName GunProneFireName = FName(TEXT("Socket_Rifle_Prone_Fire"));
+	FName GunProneFBName = FName(TEXT("Socket_Gun_ProneFB"));
+	FName GunProneOtherName = FName(TEXT("Socket_Gun_ProneOther"));
+
+	FName GunReloadName = FName(TEXT("Socket_Gun_Reload"));
+
+	FName BackLeftNName = FName(TEXT("Socket_BackLeft_Normal"));
+	FName BackRightNName = FName(TEXT("Socket_BackRight_Normal"));
+
+	FName BackRightBName = FName(TEXT("Socket_BackRight_BackPack"));
+	FName BackLeftBName = FName(TEXT("Socket_BackLeft_Backpack"));
+
+	FName HelmetName = FName(TEXT("Socket_Helmet"));
+	FName VestName = FName(TEXT("Socket_Vest"));
+	FName BackpackName = FName(TEXT("Socket_BackPack"));
+	FName MeleePanName = FName(TEXT("Socket_Pan"));
 
 protected:
 
@@ -464,7 +499,7 @@ protected:
 	void DetermineWeaponState();
 
 	/** attaches weapon mesh to pawn's mesh */
-	void AttachMeshToPawn();
+	void AttachMeshToPawn(FName SocksName);
 
 
 	//////////////////////////////////////////////////////////////////////////
