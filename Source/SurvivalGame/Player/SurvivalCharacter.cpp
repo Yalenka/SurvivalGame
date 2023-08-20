@@ -802,26 +802,19 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 		if (bIsAssign)
 		{
 			AssignPosition(Position, TargetPosition, bTargetIsOnHand);
-			print("Manual Position Assigned");
 		}
-		else
+		else 
 		{
 			TargetPosition = AutoPosition(bTargetIsOnHand);
-			print("Auto Position Assigned");
 		}
 
 		//Get Weapon object that needs to be replaced
 		AWeapon* ReplaceWeapon = nullptr;
 		if (bTargetIsOnHand)
 		{
-			if (GetEquippedWeapon())
+			if (IsValid(GetEquippedWeapon()))
 			{
 				ReplaceWeapon = GetEquippedWeapon();
-				print("HOld Gun is valid");
-			}
-			else
-			{
-				print("Hold gun is not valid");
 			}
 		}
 		else {
@@ -837,24 +830,16 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 				if (GetWeaponTwo_2()) {
 					ReplaceWeapon = GetWeaponTwo_2();
 				}
-				break;
-			case EWeaponPosition::E_Pan:
-				break;
-			case EWeaponPosition::E_Grenade:
-				break;
-			case EWeaponPosition::E_MAX:
-				break;
 			default:
 				break;
 			}
 		}
 		if (ReplaceWeapon)
 		{
-			//DropItem(ReplaceWeapon->Item, ReplaceWeapon->Item->GetQuantity());
-
-			PlayerInventory->ConsumeItem(ReplaceWeapon->Item, ReplaceWeapon->Item->GetQuantity());
-
-			//DiscardWeapon(ReplaceWeapon);
+			if (IsValid(ReplaceWeapon->Item_HoldWeapon))
+			{
+				//DropItem(ReplaceWeapon->Item_HoldWeapon, ReplaceWeapon->Item_HoldWeapon->GetQuantity());
+			}
 		}
 
 		//Spawn the weapon in
@@ -865,26 +850,28 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 
 		if (AWeapon* Weapon = GetWorld()->SpawnActor<AWeapon>(WeaponItem->WeaponClass, SpawnParams))
 		{
+
+			//if (bTargetIsOnHand) 
 			if (bTargetIsOnHand)
 			{
 				SetEquippedWeapon(Weapon);
-				GetEquippedWeapon()->Item = WeaponItem;
+				GetEquippedWeapon()->Item_HoldWeapon = WeaponItem;
 				OnRep_EquippedWeapon();
 				GetEquippedWeapon()->OnEquip();
 			}
-			else
+			else 
 			{
-				switch (TargetPosition)
+				switch (TargetPosition) 
 				{
 				case EWeaponPosition::E_Left:
 					SetWeaponOne_1(Weapon);
-					GetWeaponOne_1()->Item = WeaponItem;
+					GetWeaponOne_1()->Item_LeftWeapon = WeaponItem;
 					OnRep_WeapnOne_1();
 					GetWeaponOne_1()->OnEquip();
 					break;
 				case EWeaponPosition::E_Right:
 					SetWeaponOne_2(Weapon);
-					GetWeaponTwo_2()->Item = WeaponItem;
+					GetWeaponTwo_2()->Item_RightWeapon = WeaponItem;
 					OnRep_WeapnOne_2();
 					GetWeaponTwo_2()->OnEquip();
 					break;

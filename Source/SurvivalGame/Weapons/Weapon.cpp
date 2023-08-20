@@ -69,6 +69,9 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	DOREPLIFETIME_CONDITION(AWeapon, BurstCounter, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(AWeapon, bPendingReload, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(AWeapon, Item, COND_InitialOnly);
+	DOREPLIFETIME_CONDITION(AWeapon, Item_HoldWeapon, COND_InitialOnly);
+	DOREPLIFETIME_CONDITION(AWeapon, Item_LeftWeapon, COND_InitialOnly);
+	DOREPLIFETIME_CONDITION(AWeapon, Item_RightWeapon, COND_InitialOnly);
 }
 
 void AWeapon::PostInitializeComponents()

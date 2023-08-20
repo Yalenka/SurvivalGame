@@ -66,12 +66,77 @@ void UEquippableItem::AddedToInventory(class UInventoryComponent* Inventory)
 	//If the player looted an item don't equip it
 	if (ASurvivalCharacter* Character = Cast<ASurvivalCharacter>(Inventory->GetOwner()))
 	{
+		//Dont auto equip item if we are looting from another player
 		if (Character && !Character->IsLooting())
 		{
-			/**If we take an equippable, and don't have an item equipped at its slot, then auto equip it*/
-			if (!Character->GetEquippedItems().Contains(Slot))
+			if (!Character->GetEquippedItems().Contains(Slot) && !(ItemType == EItemType::E_Weapon))
 			{
+				//Directly equip any items like: backpack, helmet, shirt
 				SetEquipped(true);
+			}
+			else
+			{
+				UEquippableItem** Primary = Character->GetEquippedItems().Find(EEquippableSlot::EIS_PrimaryWeapon);
+				UEquippableItem** Secondary = Character->GetEquippedItems().Find(EEquippableSlot::EIS_SecondaryWeapon);
+				switch (Slot)
+				{
+				case EEquippableSlot::EIS_PrimaryWeapon:
+				{
+					if (Primary && Secondary)
+					{
+						if (Character->GetHoldWeapon())
+						{
+							SetEquipped(false);
+							if (!Character->GetEquippedItems().Contains(Slot))
+							{
+								SetEquipped(true);
+							}
+						}
+					}
+					else if (Primary)
+					{
+						(*Primary)->SetEquipped(false);
+						if (!Character->GetEquippedItems().Contains(Slot))
+						{
+							SetEquipped(true);
+						}
+					}
+					else
+					{
+						SetEquipped(true);
+					}
+				}
+				break;
+				case EEquippableSlot::EIS_SecondaryWeapon:
+				{
+					if (Primary && Secondary)
+					{
+						if (Character->GetHoldWeapon())
+						{
+							Character->UnEquipWeapon();
+							if (!Character->GetEquippedItems().Contains(Slot))
+							{
+								SetEquipped(true);
+							}
+						}
+					}
+					else if (Secondary)
+					{
+						(*Secondary)->SetEquipped(false);
+						if (!Character->GetEquippedItems().Contains(Slot))
+						{
+							SetEquipped(true);
+						}
+					}
+					else
+					{
+						SetEquipped(true);
+					}
+				}
+				break;
+				default:
+					break;
+				}
 			}
 		}
 	}

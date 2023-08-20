@@ -29,6 +29,7 @@ bool UWeaponItem::UnEquip(class ASurvivalCharacter* Character)
 	if (bUnEquipSuccessful && Character)
 	{
 		Character->UnEquipWeapon();
+		Character->DropItem(this, this->GetQuantity());
 	}
 
 	return bUnEquipSuccessful;
