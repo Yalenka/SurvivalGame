@@ -46,9 +46,9 @@ ASurvivalCharacter::ASurvivalCharacter()
 
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>("SpringArmComponent");
 	SpringArmComponent->SetupAttachment(RootComponent);
-	SpringArmComponent->SetRelativeLocation(FVector(90.0f, 30.0f, 120.0f));
+	SpringArmComponent->SetRelativeLocation(FVector(90.0f, 60.0f, 170.0f));
 	SpringArmComponent->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
-	SpringArmComponent->TargetArmLength = 210.0f;
+	SpringArmComponent->TargetArmLength = 350.0f;
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->SetupAttachment(SpringArmComponent);
@@ -327,6 +327,8 @@ void ASurvivalCharacter::EquipWeapon(class UWeaponItem* WeaponItem)
 
 		//	Weapon->OnEquip();
 		//}
+
+		
 		PickupWeapon(WeaponItem, false, EWeaponPosition::E_Left);
 	}
 }
@@ -510,17 +512,17 @@ void ASurvivalCharacter::OnRep_EquippedWeapon()
 
 void ASurvivalCharacter::OnRep_WeapnOne_1()
 {
-	if (GetWeaponOne_1())
+	if (GetPrimaryWeapon())
 	{
-		GetWeaponOne_1()->OnEquip();
+		GetPrimaryWeapon()->OnEquip();
 	}
 }
 
 void ASurvivalCharacter::OnRep_WeapnOne_2()
 {
-	if (GetWeaponTwo_2())
+	if (GetSecondaryWeapon())
 	{
-		GetWeaponTwo_2()->OnEquip();
+		GetSecondaryWeapon()->OnEquip();
 	}
 }
 
@@ -798,7 +800,7 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 		EWeaponPosition TargetPosition{};
 		bool bTargetIsOnHand{};
 
-		//Assign the position for the weapon
+		//Manual Assign the position for the weapon
 		if (bIsAssign)
 		{
 			AssignPosition(Position, TargetPosition, bTargetIsOnHand);
@@ -821,14 +823,14 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 			switch (TargetPosition)
 			{
 			case EWeaponPosition::E_Left:
-				if (GetWeaponOne_1())
+				if (GetPrimaryWeapon())
 				{
-					ReplaceWeapon = GetWeaponOne_1();
+					ReplaceWeapon = GetPrimaryWeapon();
 				}
 				break;
 			case EWeaponPosition::E_Right:
-				if (GetWeaponTwo_2()) {
-					ReplaceWeapon = GetWeaponTwo_2();
+				if (GetSecondaryWeapon()) {
+					ReplaceWeapon = GetSecondaryWeapon();
 				}
 			default:
 				break;
@@ -836,9 +838,9 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 		}
 		if (ReplaceWeapon)
 		{
-			if (IsValid(ReplaceWeapon->Item_HoldWeapon))
+			if (IsValid(ReplaceWeapon->Item))
 			{
-				//DropItem(ReplaceWeapon->Item_HoldWeapon, ReplaceWeapon->Item_HoldWeapon->GetQuantity());
+				DropItem(ReplaceWeapon->Item, ReplaceWeapon->Item->GetQuantity());
 			}
 		}
 
@@ -855,7 +857,7 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 			if (bTargetIsOnHand)
 			{
 				SetEquippedWeapon(Weapon);
-				GetEquippedWeapon()->Item_HoldWeapon = WeaponItem;
+				GetEquippedWeapon()->Item = WeaponItem;
 				OnRep_EquippedWeapon();
 				GetEquippedWeapon()->OnEquip();
 			}
@@ -865,15 +867,15 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 				{
 				case EWeaponPosition::E_Left:
 					SetWeaponOne_1(Weapon);
-					GetWeaponOne_1()->Item_LeftWeapon = WeaponItem;
+					GetPrimaryWeapon()->Item = WeaponItem;
 					OnRep_WeapnOne_1();
-					GetWeaponOne_1()->OnEquip();
+					GetPrimaryWeapon()->OnEquip();
 					break;
 				case EWeaponPosition::E_Right:
 					SetWeaponOne_2(Weapon);
-					GetWeaponTwo_2()->Item_RightWeapon = WeaponItem;
+					GetSecondaryWeapon()->Item = WeaponItem;
 					OnRep_WeapnOne_2();
-					GetWeaponTwo_2()->OnEquip();
+					GetSecondaryWeapon()->OnEquip();
 					break;
 				case EWeaponPosition::E_MAX:
 
@@ -907,13 +909,13 @@ void ASurvivalCharacter::AssignPosition(const EWeaponPosition& Assign, EWeaponPo
 EWeaponPosition ASurvivalCharacter::AutoPosition(bool& bIsOnHand)
 {
 	int32 CurrentAmount = 0;
-	if (GetWeaponOne_1())
+	if (GetPrimaryWeapon())
 	{
 		//CurrentAmount += 1;
 		CurrentAmount++;
 	}
 
-	if (GetWeaponTwo_2())
+	if (GetSecondaryWeapon())
 	{
 		//CurrentAmount += 1;
 		CurrentAmount++;
@@ -950,7 +952,7 @@ EWeaponPosition ASurvivalCharacter::AutoPosition(bool& bIsOnHand)
 				}
 			}
 			else {
-				if (GetWeaponOne_1()) {
+				if (GetPrimaryWeapon()) {
 					bIsOnHand = 0;
 					return EWeaponPosition::E_Right;
 

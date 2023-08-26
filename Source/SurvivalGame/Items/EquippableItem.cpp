@@ -76,7 +76,11 @@ void UEquippableItem::AddedToInventory(class UInventoryComponent* Inventory)
 			}
 			else
 			{
-				UEquippableItem** Primary = Character->GetEquippedItems().Find(EEquippableSlot::EIS_PrimaryWeapon);
+				if (ItemType == EItemType::E_Weapon)
+				{
+					SetEquipped(true);
+				}
+				/*UEquippableItem** Primary = Character->GetEquippedItems().Find(EEquippableSlot::EIS_PrimaryWeapon);
 				UEquippableItem** Secondary = Character->GetEquippedItems().Find(EEquippableSlot::EIS_SecondaryWeapon);
 				switch (Slot)
 				{
@@ -136,7 +140,7 @@ void UEquippableItem::AddedToInventory(class UInventoryComponent* Inventory)
 				break;
 				default:
 					break;
-				}
+				}*/
 			}
 		}
 	}

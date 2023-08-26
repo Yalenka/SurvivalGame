@@ -249,12 +249,12 @@ public:
 
 	/**An extra function Used by rebus in blueprints animation to to check if we have a weapon or not, but I will use CPP anim instance to determine it*/
 	UFUNCTION(BlueprintCallable, Category = "Weapons")
-	FORCEINLINE class AWeapon* GetWeaponOne_1() const { return WeaponOne_1; }
+	FORCEINLINE class AWeapon* GetPrimaryWeapon() const { return WeaponOne_1; }
 	void SetWeaponOne_1(AWeapon* WeaponToSet);
 
 	/**An extra function Used by rebus in blueprints animation to to check if we have a weapon or not, but I will use CPP anim instance to determine it*/
 	UFUNCTION(BlueprintCallable, Category = "Weapons")
-	FORCEINLINE class AWeapon* GetWeaponTwo_2() const { return WeaponTwo_2; }
+	FORCEINLINE class AWeapon* GetSecondaryWeapon() const { return WeaponTwo_2; }
 	void SetWeaponOne_2(AWeapon* WeaponToSet);
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")

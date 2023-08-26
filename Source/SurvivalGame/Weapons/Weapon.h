@@ -238,12 +238,12 @@ protected:
 	/** gets the duration of equipping weapon*/
 	float GetEquipDuration() const;
 
-protected:
 
 	//The weapon item in the players inventory
 	UPROPERTY(Replicated, BlueprintReadWrite, Transient)
 	class UWeaponItem* Item;
 
+protected:
 	/** pawn owner */
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_PawnOwner)
 	class ASurvivalCharacter* PawnOwner;
@@ -544,12 +544,4 @@ public:
 	/** continue processing the instant hit, as if it has been confirmed by the server */
 	void ProcessInstantHit_Confirmed(const FHitResult& Impact, const FVector& Origin, const FVector& ShootDir);
 
-public:
-		//The weapon items in the players inventory
-		UPROPERTY(Replicated, BlueprintReadOnly, Transient)
-			class UWeaponItem* Item_HoldWeapon;
-		UPROPERTY(Replicated, BlueprintReadOnly, Transient)
-			class UWeaponItem* Item_RightWeapon;
-		UPROPERTY(Replicated, BlueprintReadOnly, Transient)
-			class UWeaponItem* Item_LeftWeapon;
 };
