@@ -84,6 +84,10 @@ void AWeapon::BeginPlay()
 	{
 		PawnOwner = Cast<ASurvivalCharacter>(GetOwner());
 	}
+	if (IsValid(PawnOwner))
+	{
+		PawnOwner->OnWeaponChanged.AddDynamic(this, &AWeapon::Event_OnWeaponChanged);
+	}
 }
 
 
@@ -166,7 +170,7 @@ void AWeapon::UpdateWeaponDisplay(FName HoldSocket)
 				{
 					if (PawnOwner->GetEquippedWeapon())
 					{
-						AttachMeshToPawn(HoldSocket);
+						AttachMeshToPawn(PawnOwner->GetEquippedWeapon(), HoldSocket);
 						//print("Weapon hold");
 					}
 				}
@@ -190,12 +194,12 @@ void AWeapon::UpdateWeaponDisplay(FName HoldSocket)
 			if (PawnOwner->GetPrimaryWeapon())
 			{
 				if (bIsEquipBackpack) {
-					AttachMeshToPawn(BackLeftBName);
+					AttachMeshToPawn(PawnOwner->GetPrimaryWeapon(), BackLeftBName);
 					//print("Weapon Left 1 b");
 				}
 				else
 				{
-					AttachMeshToPawn(BackLeftNName);
+					AttachMeshToPawn(PawnOwner->GetPrimaryWeapon(), BackLeftNName);
 					//print("Weapon hold 1 n");
 				}
 
@@ -204,12 +208,12 @@ void AWeapon::UpdateWeaponDisplay(FName HoldSocket)
 			{
 				if (bIsEquipBackpack)
 				{
-					AttachMeshToPawn(BackRightBName);
+					AttachMeshToPawn(PawnOwner->GetSecondaryWeapon(), BackRightBName);
 					//print("Weapon hold 2 b");
 				}
 				else
 				{
-					AttachMeshToPawn(BackRightNName);
+					AttachMeshToPawn(PawnOwner->GetSecondaryWeapon(), BackRightNName);
 					//print("Weapon hold 2 n");
 				}
 
@@ -855,14 +859,14 @@ void AWeapon::DetermineWeaponState()
 	SetWeaponState(NewState);
 }
 
-void AWeapon::AttachMeshToPawn(FName SocksName)
+void AWeapon::AttachMeshToPawn(class AWeapon* NewWeapon, FName SocksName)
 {
 	if (PawnOwner)
 	{
 		if (const USkeletalMeshComponent* PawnMesh = PawnOwner->GetMesh())
 		{
 			const FName AttachSocket = PawnOwner->IsLocallyControlled() ? SocksName : SocksName;
-			AttachToComponent(PawnOwner->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocket);
+			NewWeapon->AttachToComponent(PawnOwner->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocket);
 		}
 	}
 }
@@ -1094,6 +1098,11 @@ void AWeapon::ProcessInstantHit_Confirmed(const FHitResult& Impact, const FVecto
 	{
 		SpawnImpactEffects(Impact);
 	}
+}
+
+void AWeapon::Event_OnWeaponChanged(AWeapon* NewWeaponActor, EWeaponPosition NewPosition, bool NewbIsOnHand)
+{
+	UpdateWeaponDisplay(CalculateHoldGunSocket());
 }
 
 void AWeapon::ServerNotifyMiss_Implementation(FVector_NetQuantizeNormal ShootDir)

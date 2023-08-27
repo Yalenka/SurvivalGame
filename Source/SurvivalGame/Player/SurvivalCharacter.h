@@ -208,6 +208,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Items")
 	void DropItem(class UItem* Item, const int32 Quantity);
 
+	//properly discard weapon
+	UFUNCTION(BlueprintCallable)
+	void DiscardWeapon(class AWeapon* WeaponActor, int32 Quantity);
+
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerDropItem(class UItem* Item, const int32 Quantity);
 
@@ -250,12 +254,12 @@ public:
 	/**An extra function Used by rebus in blueprints animation to to check if we have a weapon or not, but I will use CPP anim instance to determine it*/
 	UFUNCTION(BlueprintCallable, Category = "Weapons")
 	FORCEINLINE class AWeapon* GetPrimaryWeapon() const { return WeaponOne_1; }
-	void SetWeaponOne_1(AWeapon* WeaponToSet);
+	void SetPrimaryWeapon(AWeapon* WeaponToSet);
 
 	/**An extra function Used by rebus in blueprints animation to to check if we have a weapon or not, but I will use CPP anim instance to determine it*/
 	UFUNCTION(BlueprintCallable, Category = "Weapons")
 	FORCEINLINE class AWeapon* GetSecondaryWeapon() const { return WeaponTwo_2; }
-	void SetWeaponOne_2(AWeapon* WeaponToSet);
+	void SetSecondaryWeapon(AWeapon* WeaponToSet);
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnWeaponChangedSignature OnWeaponChanged;
@@ -300,14 +304,14 @@ protected:
 	class AWeapon* EquippedWeapon;
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
-	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_WeapnOne_1)
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_PrimaryWeapon)
 	class AWeapon* WeaponOne_1;
 	UFUNCTION()
-	void OnRep_WeapnOne_1();
-	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_WeapnOne_2)
+	void OnRep_PrimaryWeapon();
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_SecondaryWeapon)
 	class AWeapon* WeaponTwo_2;
 	UFUNCTION()
-	void OnRep_WeapnOne_2();
+	void OnRep_SecondaryWeapon();
 
 	void StartFire();
 	void StopFire();
@@ -432,8 +436,8 @@ public:
 	FORCEINLINE bool GetProne() const { return bProning; }
 	FORCEINLINE void SetCrouching(bool NewValue) { bCrouching = NewValue; }
 	FORCEINLINE bool GetCrouching() const { return bCrouching; }
-	FORCEINLINE void SetHoldWeapon(bool NewValue) { bHoldWeapon = NewValue; }
-	FORCEINLINE bool GetHoldWeapon() const { return bHoldWeapon; }
+	FORCEINLINE void SetIsHoldWeapon(bool NewValue) { bHoldWeapon = NewValue; }
+	FORCEINLINE bool GetIsHoldWeapon() const { return bHoldWeapon; }
 
 	FORCEINLINE class USpringArmComponent* GetSpringArm() const { return SpringArmComponent; }
 	FORCEINLINE void SetAltPressed(bool NewValue) { bAltPressed = NewValue; }

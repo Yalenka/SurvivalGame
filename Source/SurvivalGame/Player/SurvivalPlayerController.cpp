@@ -303,14 +303,14 @@ void ASurvivalPlayerController::UpdateCameraHeight()
 		{
 			if (CharacterRef->GetCrouching())
 			{
-				if (!CharacterRef->GetHoldWeapon() && (CharacterRef->GetMoveForwardAxis() != 0.0f || CharacterRef->GetMoveRightAxis() != 0.0f))
+				if (!CharacterRef->GetIsHoldWeapon() && (CharacterRef->GetMoveForwardAxis() != 0.0f || CharacterRef->GetMoveRightAxis() != 0.0f))
 				{
 					if (const FST_CameraHeight * Row{ DT_CameraHeight->FindRow<FST_CameraHeight>("Crouch_Normal_Move", "") }) //60
 					{
 						NewHeight = Row->Height;
 					}
 				}
-				else if (CharacterRef->GetHoldWeapon() && (CharacterRef->GetMoveForwardAxis() != 0.0f || CharacterRef->GetMoveRightAxis() != 0.0f))
+				else if (CharacterRef->GetIsHoldWeapon() && (CharacterRef->GetMoveForwardAxis() != 0.0f || CharacterRef->GetMoveRightAxis() != 0.0f))
 				{
 					if (const FST_CameraHeight * Row{ DT_CameraHeight->FindRow<FST_CameraHeight>("Crouch_Rifle_Move", "") }) //80
 					{

@@ -214,7 +214,6 @@ void ASurvivalCharacter::DropItem(class UItem* Item, const int32 Quantity)
 		{
 			const int32 ItemQuantity = Item->GetQuantity();
 			const int32 DroppedQuantity = PlayerInventory->ConsumeItem(Item, Quantity);
-
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Owner = this;
 			SpawnParams.bNoFail = true;
@@ -225,13 +224,73 @@ void ASurvivalCharacter::DropItem(class UItem* Item, const int32 Quantity)
 
 			FTransform SpawnTransform(GetActorRotation(), SpawnLocation);
 
-			ensure(PickupClass);
-
-			if (APickup* Pickup = GetWorld()->SpawnActor<APickup>(PickupClass, SpawnTransform, SpawnParams))
+			//ensure(PickupClass);
+			if (IsValid(PickupClass))
 			{
-				Pickup->InitializePickup(Item->GetClass(), DroppedQuantity);
+				if (APickup* Pickup = GetWorld()->SpawnActor<APickup>(PickupClass, SpawnTransform, SpawnParams))
+				{
+					Pickup->InitializePickup(Item->GetClass(), DroppedQuantity);
+				}
+			}
+			else
+			{
+				print("Pickup Not valid to spawn: @ASurvivalCharacter::DropItem");
+				return;
 			}
 		}
+	}
+}
+
+void ASurvivalCharacter::DiscardWeapon(class AWeapon* WeaponActor, int32 Quantity)
+{
+	if (IsValid(WeaponActor))
+	{
+		if (WeaponActor->bIsOnHand)
+		{
+			DropItem(WeaponActor->Item, Quantity);
+
+			//GetEquippedWeapon()->OnUnEquip();
+			//GetEquippedWeapon()->Destroy();
+			//SetEquippedWeapon(nullptr);
+			//OnRep_EquippedWeapon();
+		}
+
+		if (GetIsHoldWeapon())
+		{
+			DropItem(WeaponActor->Item, Quantity);
+		}
+		else {
+			switch (WeaponActor->Position) {
+			case EWeaponPosition::E_Left:
+				if (GetPrimaryWeapon())
+				{
+					DropItem(WeaponActor->Item, Quantity);
+
+					//GetPrimaryWeapon()->OnUnEquip();
+					//GetPrimaryWeapon()->Destroy();
+					//SetWeaponOne_1(nullptr);
+					//OnRep_WeapnOne_1();
+				}
+				break;
+			case EWeaponPosition::E_Right:
+				if (GetSecondaryWeapon())
+				{
+					DropItem(WeaponActor->Item, Quantity);
+
+					//GetSecondaryWeapon()->OnUnEquip();
+					//GetSecondaryWeapon()->Destroy();
+					//SetWeaponOne_2(nullptr);
+					//OnRep_WeapnOne_2();
+				}
+				break;
+			case EWeaponPosition::E_MAX:
+
+				break;
+			default:
+				break;
+			}
+		}
+		WeaponActor->Destroy();
 	}
 }
 
@@ -364,13 +423,13 @@ void ASurvivalCharacter::SetEquippedWeapon(AWeapon* WeaponToSet)
 	}
 }
 
-void ASurvivalCharacter::SetWeaponOne_1(AWeapon* WeaponToSet)
+void ASurvivalCharacter::SetPrimaryWeapon(AWeapon* WeaponToSet)
 {
 	WeaponOne_1 = WeaponToSet;
 	OnWeaponChanged.Broadcast(WeaponOne_1, EWeaponPosition::E_Left, 0);
 }
 
-void ASurvivalCharacter::SetWeaponOne_2(AWeapon* WeaponToSet)
+void ASurvivalCharacter::SetSecondaryWeapon(AWeapon* WeaponToSet)
 {
 	WeaponTwo_2 = WeaponToSet;
 	OnWeaponChanged.Broadcast(WeaponTwo_2, EWeaponPosition::E_Right, 0);
@@ -504,25 +563,38 @@ void ASurvivalCharacter::OnRep_Health(float OldHealth)
 
 void ASurvivalCharacter::OnRep_EquippedWeapon()
 {
-	if (EquippedWeapon)
+	if (GetEquippedWeapon())
 	{
-		EquippedWeapon->OnEquip();
+		GetEquippedWeapon()->OnEquip();
+		SetIsHoldWeapon(true);
+	}
+	else
+	{
+		SetIsHoldWeapon(false);
 	}
 }
 
-void ASurvivalCharacter::OnRep_WeapnOne_1()
+void ASurvivalCharacter::OnRep_PrimaryWeapon()
 {
 	if (GetPrimaryWeapon())
 	{
 		GetPrimaryWeapon()->OnEquip();
 	}
+	else
+	{
+		SetPrimaryWeapon(nullptr);
+	}
 }
 
-void ASurvivalCharacter::OnRep_WeapnOne_2()
+void ASurvivalCharacter::OnRep_SecondaryWeapon()
 {
 	if (GetSecondaryWeapon())
 	{
 		GetSecondaryWeapon()->OnEquip();
+	}
+	else
+	{
+		SetSecondaryWeapon(nullptr);
 	}
 }
 
@@ -801,13 +873,13 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 		bool bTargetIsOnHand{};
 
 		//Manual Assign the position for the weapon
-		if (bIsAssign)
+		if (!bIsAssign)
 		{
-			AssignPosition(Position, TargetPosition, bTargetIsOnHand);
+			TargetPosition = AutoPosition(bTargetIsOnHand);
 		}
 		else 
 		{
-			TargetPosition = AutoPosition(bTargetIsOnHand);
+			AssignPosition(Position, TargetPosition, bTargetIsOnHand);
 		}
 
 		//Get Weapon object that needs to be replaced
@@ -840,7 +912,8 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 		{
 			if (IsValid(ReplaceWeapon->Item))
 			{
-				DropItem(ReplaceWeapon->Item, ReplaceWeapon->Item->GetQuantity());
+				DiscardWeapon(ReplaceWeapon, ReplaceWeapon->Item->GetQuantity());
+				//DropItem(ReplaceWeapon->Item, ReplaceWeapon->Item->GetQuantity());
 			}
 		}
 
@@ -866,15 +939,15 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 				switch (TargetPosition) 
 				{
 				case EWeaponPosition::E_Left:
-					SetWeaponOne_1(Weapon);
+					SetPrimaryWeapon(Weapon);
 					GetPrimaryWeapon()->Item = WeaponItem;
-					OnRep_WeapnOne_1();
+					OnRep_PrimaryWeapon();
 					GetPrimaryWeapon()->OnEquip();
 					break;
 				case EWeaponPosition::E_Right:
-					SetWeaponOne_2(Weapon);
+					SetSecondaryWeapon(Weapon);
 					GetSecondaryWeapon()->Item = WeaponItem;
-					OnRep_WeapnOne_2();
+					OnRep_SecondaryWeapon();
 					GetSecondaryWeapon()->OnEquip();
 					break;
 				case EWeaponPosition::E_MAX:
@@ -1533,7 +1606,7 @@ void ASurvivalCharacter::UpdateWalkSpeed()
 		FString Posture;
 		FString MoveState;
 		/*Get the current character state status*/
-		HoldWeapon = UKismetStringLibrary::Conv_BoolToString(GetHoldWeapon());
+		HoldWeapon = UKismetStringLibrary::Conv_BoolToString(GetIsHoldWeapon());
 
 		if (GetCrouching())
 		{

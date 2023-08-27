@@ -124,6 +124,7 @@ public:
 	EWeaponPosition Position;
 	FName CalculateHoldGunSocket();
 	void UpdateWeaponDisplay(FName HoldSocket);
+	bool bIsOnHand;
 
 	UPROPERTY(EditDefaultsOnly, Category = Sockets)
 	FName GunSocket;
@@ -499,7 +500,7 @@ protected:
 	void DetermineWeaponState();
 
 	/** attaches weapon mesh to pawn's mesh */
-	void AttachMeshToPawn(FName SocksName);
+	void AttachMeshToPawn(class AWeapon* NewWeapon, FName SocksName);
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -543,5 +544,9 @@ public:
 
 	/** continue processing the instant hit, as if it has been confirmed by the server */
 	void ProcessInstantHit_Confirmed(const FHitResult& Impact, const FVector& Origin, const FVector& ShootDir);
+
+	//Update character weapon display
+	UFUNCTION(BlueprintCallable, meta = (Category = "Event Weapon changing"))
+	void Event_OnWeaponChanged(AWeapon* NewWeaponActor, EWeaponPosition NewPosition, bool NewbIsOnHand);
 
 };
