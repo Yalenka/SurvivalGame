@@ -49,7 +49,7 @@ void USurvivalAnimInstance::UpdateAnimProperties()
 	bCrouching_Anim = Character->GetCrouching();
 	bProning_Anim = Character->GetProne();
 	bDead_Anim = Character->GetDead();
-	Weapon = Character->GetEquippedWeapon();
+	Weapon = Character->GetHoldWeapon();
 
 	if (Weapon != nullptr)
 	{

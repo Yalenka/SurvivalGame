@@ -248,8 +248,8 @@ public:
 	FORCEINLINE TMap<EEquippableSlot, UEquippableItem*> GetEquippedItems() const { return EquippedItems; }
 
 	UFUNCTION(BlueprintCallable, Category = "Weapons")
-	FORCEINLINE class AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
-	void SetEquippedWeapon(AWeapon* WeaponToSet);
+	FORCEINLINE class AWeapon* GetHoldWeapon() const { return EquippedWeapon; }
+	void SetHoldWeapon(AWeapon* WeaponToSet);
 
 	/**An extra function Used by rebus in blueprints animation to to check if we have a weapon or not, but I will use CPP anim instance to determine it*/
 	UFUNCTION(BlueprintCallable, Category = "Weapons")
@@ -511,4 +511,40 @@ public:
 	void PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAssign, EWeaponPosition Position);
 	void AssignPosition(const EWeaponPosition& Assign, EWeaponPosition& Position, bool& bIsOnHand);
 	EWeaponPosition AutoPosition(bool& bIsOnHand);
+
+	/**Used to switch to primary weapon*/
+	void SwitchToPrimaryWeapon();
+	/**Used to switch to secondary weapon*/
+	void SwitchToSecondaryWeapon();
+	/**Used to store the primary weapon as ready equipped weapon to make it ready to switch*/
+	UPROPERTY(Replicated)
+	class AWeapon* ReadyEquipWeapon;
+	class USurvivalAnimInstance* MyAnimInstance;
+	/**The actual function that put the new weapon from spine to hands on switch*/
+	void _EquipWeapon();
+
+	//used to bind to delegate onmontage end to set the new state for variable bIsMontagePlaying
+	UFUNCTION()
+	void Event_OnMontageEnded(class UAnimMontage* Montage, bool Interrupted);
+
+	//used to play montage animation and put the weapon on the back, it will call takeback weapon function
+	UFUNCTION()
+	void Event_OnUnEquip();
+	UFUNCTION()
+	void Event_OnEquip();
+
+	/**Used to change the weapon state, hold or unhold, and called after when the weapon changes means equip new weapon or any other change to weapon*/
+	void TakeBackGunKey();
+
+	void UpdateWeapnState();
+	void TakeBackWeapon();
+
+	UFUNCTION()
+	void PlayMontage(EMontageType MontageTypes, float PlayRate);
+	UPROPERTY(Replicated)
+	bool bIsPlayingMontage;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation | Equip")
+	class UAnimMontage* EquipMontage;
+	UPROPERTY(EditDefaultsOnly, Category = "Animation | Equip")
+	class UAnimMontage* UnEquipMontage;
 };

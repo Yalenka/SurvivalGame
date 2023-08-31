@@ -168,9 +168,9 @@ void AWeapon::UpdateWeaponDisplay(FName HoldSocket)
 			{
 				if (HoldSocket != "None")
 				{
-					if (PawnOwner->GetEquippedWeapon())
+					if (PawnOwner->GetHoldWeapon())
 					{
-						AttachMeshToPawn(PawnOwner->GetEquippedWeapon(), HoldSocket);
+						AttachMeshToPawn(PawnOwner->GetHoldWeapon(), HoldSocket);
 						//print("Weapon hold");
 					}
 				}

@@ -31,3 +31,17 @@ enum class EItemType : uint8 /*Defining the Equipment item type*/
 	E_Pan UMETA(DisplayName = "Pan"),
 	E_Grenade UMETA(DisplayName = "Grenade")
 };
+
+UENUM(BlueprintType)
+enum class EMontageType : uint8
+{
+	EIS_Equip UMETA(DisplayName = "Equip"),
+	EIS_UnEquip UMETA(DisplayName = "UnEquip"),
+	EIS_Reload UMETA(DisplayName = "Reload"),
+	EIS_ReloadBullet UMETA(DisplayName = "ReloadBullet"),
+	EIS_Fire UMETA(DisplayName = "Fire"),
+	EIS_Use UMETA(DisplayName = "Use"),
+	EIS_Pickup UMETA(DisplayName = "Pickup"),
+	EIS_ThrowGrenade UMETA(DisplayName = "ThrowGrenade"),
+	EIS_ThrowPetrolBomb UMETA(DisplayName = "ThrowPetrolBomb")
+};
