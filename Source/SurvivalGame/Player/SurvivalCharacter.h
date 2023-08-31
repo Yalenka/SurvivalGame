@@ -38,6 +38,15 @@ struct FInteractionData
 	bool bInteractHeld;
 
 };
+
+UENUM(BlueprintType)
+enum class WeaponSlot : uint8 {
+	None,
+	Primary,
+	Secondary,
+	Grenade
+};
+
 ///** Weapon Positions enum on character*/
 //UENUM(BlueprintType)
 //enum class EWeaponPosition : uint8
@@ -547,4 +556,5 @@ public:
 	class UAnimMontage* EquipMontage;
 	UPROPERTY(EditDefaultsOnly, Category = "Animation | Equip")
 	class UAnimMontage* UnEquipMontage;
+
 };
