@@ -881,11 +881,12 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 		EWeaponPosition TargetPosition{};
 		bool bTargetIsOnHand{};
 
-		//Manual Assign the position for the weapon
+		//if specific position is not assigned, auto position the weapon, it will effect the direct interact by pressing E key on ground items
 		if (!bIsAssign)
 		{
 			TargetPosition = AutoPosition(bTargetIsOnHand);
 		}
+		//Set manual assigned position, it will effect changing weapon positoins using UI
 		else 
 		{
 			AssignPosition(Position, TargetPosition, bTargetIsOnHand);
