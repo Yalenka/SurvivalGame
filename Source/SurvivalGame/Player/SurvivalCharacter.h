@@ -523,8 +523,13 @@ public:
 
 	/**Used to switch to primary weapon*/
 	void SwitchToPrimaryWeapon();
+	UFUNCTION(Server, Reliable)
+	void Server_SwitchToPrimaryWeapon();
 	/**Used to switch to secondary weapon*/
 	void SwitchToSecondaryWeapon();
+	UFUNCTION(Server, Reliable)
+	void Server_SwitchToSecondaryWeapon();
+
 	/**Used to store the primary weapon as ready equipped weapon to make it ready to switch*/
 	UPROPERTY(Replicated)
 	class AWeapon* ReadyEquipWeapon;
@@ -544,12 +549,20 @@ public:
 
 	/**Used to change the weapon state, hold or unhold, and called after when the weapon changes means equip new weapon or any other change to weapon*/
 	void TakeBackGunKey();
+	UFUNCTION(Server, Reliable)
+	void Server_TakeBackGunKey();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_TakeBackGunKey();
 
 	void UpdateWeapnState();
 	void TakeBackWeapon();
 
 	UFUNCTION()
 	void PlayMontage(EMontageType MontageTypes, float PlayRate);
+	UFUNCTION(Server, Reliable)
+	void Server_PlayMontage(EMontageType MontageTypes, float PlayRate);
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticast_PlayMontage(EMontageType MontageTypes, float PlayRate);
 	UPROPERTY(Replicated)
 	bool bIsPlayingMontage;
 	UPROPERTY(EditDefaultsOnly, Category = "Animation | Equip")

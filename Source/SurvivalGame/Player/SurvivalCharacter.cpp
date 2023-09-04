@@ -167,6 +167,8 @@ void ASurvivalCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(ASurvivalCharacter, EquippedWeapon);
 	DOREPLIFETIME(ASurvivalCharacter, WeaponOne_1);
 	DOREPLIFETIME(ASurvivalCharacter, WeaponTwo_2);
+	DOREPLIFETIME(ASurvivalCharacter, ReadyEquipWeapon);
+	DOREPLIFETIME(ASurvivalCharacter, bIsPlayingMontage);
 	DOREPLIFETIME(ASurvivalCharacter, Killer);
 
 	DOREPLIFETIME_CONDITION(ASurvivalCharacter, LootSource, COND_OwnerOnly);
@@ -405,10 +407,10 @@ void ASurvivalCharacter::UnEquipWeapon()
 {
 	if (HasAuthority() && EquippedWeapon)
 	{
-		EquippedWeapon->OnUnEquip();
-		EquippedWeapon->Destroy();
-		EquippedWeapon = nullptr;
-		OnRep_EquippedWeapon();
+		//EquippedWeapon->OnUnEquip();
+		//EquippedWeapon->Destroy();
+		//EquippedWeapon = nullptr;
+		//OnRep_EquippedWeapon();
 	}
 }
 
@@ -424,11 +426,12 @@ class USkeletalMeshComponent* ASurvivalCharacter::GetSlotSkeletalMeshComponent(c
 void ASurvivalCharacter::SetHoldWeapon(AWeapon* WeaponToSet)
 {
 	EquippedWeapon = WeaponToSet;
-	if (EquippedWeapon) {
-		OnWeaponChanged.Broadcast(GetHoldWeapon(), GetHoldWeapon()->Position, 1);
+	if (IsValid(GetHoldWeapon())) {
+		OnWeaponChanged.Broadcast(EquippedWeapon, EquippedWeapon->Position, true);
 	}
-	else {
-		OnWeaponChanged.Broadcast(EquippedWeapon, EWeaponPosition::E_Left, 1);
+	else
+	{
+		OnWeaponChanged.Broadcast(GetHoldWeapon(), EWeaponPosition::E_Left, true);
 	}
 }
 
@@ -878,53 +881,53 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 {
 	if (WeaponItem && WeaponItem->WeaponClass && HasAuthority())
 	{
-		EWeaponPosition TargetPosition{};
+		AWeapon* ReplaceWeapon = nullptr;
+		EWeaponPosition TargetPosition;
 		bool bTargetIsOnHand{};
 
-		//if specific position is not assigned, auto position the weapon, it will effect the direct interact by pressing E key on ground items
-		if (!bIsAssign)
-		{
-			TargetPosition = AutoPosition(bTargetIsOnHand);
-		}
-		//Set manual assigned position, it will effect changing weapon positoins using UI
-		else 
+		//Assign the position for the weapon
+		if (bIsAssign)
 		{
 			AssignPosition(Position, TargetPosition, bTargetIsOnHand);
 		}
+		else
+		{
+			TargetPosition = AutoPosition(bTargetIsOnHand);
+		}
 
 		//Get Weapon object that needs to be replaced
-		AWeapon* ReplaceWeapon = nullptr;
-		if (bTargetIsOnHand)
+		if (bTargetIsOnHand && IsValid(GetHoldWeapon()))
 		{
-			if (IsValid(GetHoldWeapon()))
-			{
-				ReplaceWeapon = GetHoldWeapon();
-			}
+			ReplaceWeapon = GetHoldWeapon();
 		}
-		else {
+		else
+		{
 			switch (TargetPosition)
 			{
 			case EWeaponPosition::E_Left:
-				if (GetPrimaryWeapon())
+			{
+				if (IsValid(GetPrimaryWeapon()))
 				{
 					ReplaceWeapon = GetPrimaryWeapon();
 				}
-				break;
+			}
+			break;
 			case EWeaponPosition::E_Right:
-				if (GetSecondaryWeapon()) {
+			{
+				if (IsValid(GetSecondaryWeapon()))
+				{
 					ReplaceWeapon = GetSecondaryWeapon();
 				}
+			}
 			default:
 				break;
 			}
 		}
-		if (ReplaceWeapon)
+
+		if (IsValid(ReplaceWeapon) && IsValid(ReplaceWeapon->Item))
 		{
-			if (IsValid(ReplaceWeapon->Item))
-			{
-				DiscardWeapon(ReplaceWeapon, ReplaceWeapon->Item->GetQuantity());
-				//DropItem(ReplaceWeapon->Item, ReplaceWeapon->Item->GetQuantity());
-			}
+			DiscardWeapon(ReplaceWeapon, ReplaceWeapon->Item->GetQuantity());
+			//DropItem(ReplaceWeapon->Item, ReplaceWeapon->Item->GetQuantity());
 		}
 
 		//Spawn the weapon in
@@ -932,34 +935,46 @@ void ASurvivalCharacter::PickupWeapon(class UWeaponItem* WeaponItem, bool bIsAss
 		SpawnParams.bNoFail = true;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 		SpawnParams.Owner = SpawnParams.Instigator = this;
+		SpawnParams.bDeferConstruction = true;
 
-		if (AWeapon* Weapon = GetWorld()->SpawnActor<AWeapon>(WeaponItem->WeaponClass, SpawnParams))
+		FTransform Transformx;
+		Transformx.SetLocation(FVector::ZeroVector);
+		AWeapon* Weapon = nullptr;
+
+		Weapon = GetWorld()->SpawnActor<AWeapon>(WeaponItem->WeaponClass, SpawnParams);
+		if (Weapon)
 		{
+			Weapon->bIsOnHand = bTargetIsOnHand;
+			Weapon->Position = TargetPosition;
+			Weapon->Item = WeaponItem;
+			Weapon->FinishSpawning(Transformx);
 
 			//if (bTargetIsOnHand) 
 			if (bTargetIsOnHand)
 			{
 				SetHoldWeapon(Weapon);
-				GetHoldWeapon()->Item = WeaponItem;
+				//GetHoldWeapon()->Item = WeaponItem;
 				OnRep_EquippedWeapon();
 				GetHoldWeapon()->OnEquip();
 			}
-			else 
+			else
 			{
-				switch (TargetPosition) 
+				switch (TargetPosition)
 				{
 				case EWeaponPosition::E_Left:
+				{
 					SetPrimaryWeapon(Weapon);
-					GetPrimaryWeapon()->Item = WeaponItem;
-					OnRep_PrimaryWeapon();
-					GetPrimaryWeapon()->OnEquip();
-					break;
+					GetPrimaryWeapon()->bIsOnHand = bTargetIsOnHand;
+					GetPrimaryWeapon()->Position = TargetPosition;
+				}
+				break;
 				case EWeaponPosition::E_Right:
+				{
 					SetSecondaryWeapon(Weapon);
-					GetSecondaryWeapon()->Item = WeaponItem;
-					OnRep_SecondaryWeapon();
-					GetSecondaryWeapon()->OnEquip();
-					break;
+					GetSecondaryWeapon()->bIsOnHand = bTargetIsOnHand;
+					GetSecondaryWeapon()->Position = TargetPosition;
+				}
+				break;
 				case EWeaponPosition::E_MAX:
 
 					break;
@@ -1078,34 +1093,66 @@ EWeaponPosition ASurvivalCharacter::AutoPosition(bool& bIsOnHand)
 
 void ASurvivalCharacter::SwitchToPrimaryWeapon()
 {
-	ReadyEquipWeapon = GetPrimaryWeapon();
-	if (IsValid(ReadyEquipWeapon))
+	if (HasAuthority())
 	{
-		if (!IsValid(GetHoldWeapon()))
+		if (IsValid(GetPrimaryWeapon()))
 		{
-			PlayMontage(EMontageType::EIS_Equip, 0);
-		}
-		else
-		{
-			PlayMontage(EMontageType::EIS_UnEquip, 0);
+			if (!bIsPlayingMontage)
+			{
+				ReadyEquipWeapon = GetPrimaryWeapon();
+
+				if (IsValid(GetHoldWeapon()))
+				{
+					PlayMontage(EMontageType::EIS_UnEquip, 0);
+				}
+				else
+				{
+					PlayMontage(EMontageType::EIS_Equip, 0);
+				}
+			}
 		}
 	}
+	else
+	{
+		Server_SwitchToPrimaryWeapon();
+	}
+}
+
+void ASurvivalCharacter::Server_SwitchToPrimaryWeapon_Implementation()
+{
+	SwitchToPrimaryWeapon();
 }
 
 void ASurvivalCharacter::SwitchToSecondaryWeapon()
 {
-	ReadyEquipWeapon = GetSecondaryWeapon();
-	if (IsValid(ReadyEquipWeapon))
+	if (HasAuthority())
 	{
-		if (!IsValid(GetHoldWeapon()))
+		if (IsValid(GetSecondaryWeapon()))
 		{
-			PlayMontage(EMontageType::EIS_Equip, 0.0f);
-		}
-		else
-		{
-			PlayMontage(EMontageType::EIS_UnEquip, 0.0f);
+			if (!bIsPlayingMontage)
+			{
+				ReadyEquipWeapon = GetSecondaryWeapon();
+
+				if (IsValid(GetHoldWeapon()))
+				{
+					PlayMontage(EMontageType::EIS_UnEquip, 0);
+				}
+				else
+				{
+					PlayMontage(EMontageType::EIS_Equip, 0);
+				}
+			}
 		}
 	}
+	else
+	{
+		Server_SwitchToSecondaryWeapon();
+	}
+}
+
+void ASurvivalCharacter::Server_SwitchToSecondaryWeapon_Implementation()
+{
+	SwitchToSecondaryWeapon();
 }
 
 void ASurvivalCharacter::_EquipWeapon()
@@ -1148,27 +1195,139 @@ void ASurvivalCharacter::Event_OnMontageEnded(class UAnimMontage* Montage, bool 
 
 void ASurvivalCharacter::Event_OnUnEquip()
 {
-	TakeBackWeapon();
-	//Wen the weapon is switched by pressing 1/2 , it will check if any weapon wants to be equipped
-	if (IsValid(ReadyEquipWeapon))
+	if (HasAuthority() && IsValid(GetHoldWeapon()))
 	{
-		PlayMontage(EMontageType::EIS_Equip, 0);
-	}
-	else
-	{
-		print("Ready Equip weapon is null");
-		return;
+		SetIsHoldWeapon(false);
+		GetHoldWeapon()->bIsOnHand = false;
+
+		switch (GetHoldWeapon()->Position)
+		{
+		case EWeaponPosition::E_Left:
+		{
+			if (IsValid(GetHoldWeapon()))
+			{
+				/**
+				* if the weapon position is left side, set the hold weapon to left side slot
+				* if the hold weapon is successfully copied to left side slot, set the hold weapon to nullptr
+				*/
+				SetPrimaryWeapon(GetHoldWeapon());
+				if (IsValid(GetPrimaryWeapon()))
+				{
+					SetHoldWeapon(nullptr);
+					print("Left");
+				}
+				else
+				{
+					print("Left Side weapon is nullptr :: Character::Event_OnUnEquip()");
+					return;
+				}
+			}
+		}
+		break;
+		case EWeaponPosition::E_Right:
+		{
+			if (IsValid(GetHoldWeapon()))
+			{
+				/**
+				* if the weapon position is right side, set the hold weapon to right side slot
+				* if the hold weapon is successfully copied to right side slot, set the hold weapon to nullptr
+				*/
+				SetSecondaryWeapon(GetHoldWeapon());
+				if (IsValid(GetSecondaryWeapon()))
+				{
+					SetHoldWeapon(nullptr);
+					print("Right");
+				}
+				else
+				{
+					print("Right Side weapon is nullptr :: ASurvivalCharacter::Event_OnUnEquip()");
+					return;
+				}
+			}
+		}
+		break;
+		default:
+			break;
+		}
+
+		//Wen the weapon is switched by pressing 1/2 , it will check if any weapon wants to be equipped
+		if (IsValid(ReadyEquipWeapon))
+		{
+			PlayMontage(EMontageType::EIS_Equip, 0);
+		}
+		else
+		{
+			print("Ready Equip weapon is null");
+			return;
+		}
 	}
 }
 
 void ASurvivalCharacter::Event_OnEquip()
 {
-	_EquipWeapon();
+	if (IsValid(ReadyEquipWeapon))
+	{
+		SetIsHoldWeapon(true);
+		SetHoldWeapon(nullptr);
+		SetHoldWeapon(ReadyEquipWeapon);
+
+		//Testing
+		GetHoldWeapon()->Item = ReadyEquipWeapon->Item;
+		OnRep_EquippedWeapon();
+		GetHoldWeapon()->OnEquip();
+		//Testing finished
+
+		ReadyEquipWeapon->bIsOnHand = true;
+
+		switch (ReadyEquipWeapon->Position)
+		{
+		case EWeaponPosition::E_Left:
+		{
+			SetPrimaryWeapon(nullptr);
+			ReadyEquipWeapon = nullptr;
+		}
+		break;
+		case EWeaponPosition::E_Right:
+		{
+			SetSecondaryWeapon(nullptr);
+			ReadyEquipWeapon = nullptr;
+		}
+		break;
+		case EWeaponPosition::E_Pan:
+			break;
+		case EWeaponPosition::E_Grenade:
+			break;
+		case EWeaponPosition::E_MAX:
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 void ASurvivalCharacter::TakeBackGunKey()
 {
-	PlayMontage(EMontageType::EIS_UnEquip, 0);
+	if (HasAuthority())
+	{
+		Multicast_TakeBackGunKey();
+	}
+	else
+	{
+		Server_TakeBackGunKey();
+	}
+}
+
+void ASurvivalCharacter::Server_TakeBackGunKey_Implementation()
+{
+	TakeBackGunKey();
+}
+
+void ASurvivalCharacter::Multicast_TakeBackGunKey_Implementation()
+{
+	if (IsValid(GetHoldWeapon()))
+	{
+		PlayMontage(EMontageType::EIS_UnEquip, 0);
+	}
 }
 
 void ASurvivalCharacter::UpdateWeapnState()
@@ -1214,6 +1373,19 @@ void ASurvivalCharacter::TakeBackWeapon()
 
 void ASurvivalCharacter::PlayMontage(EMontageType MontageTypes, float PlayRate)
 {
+
+	if (HasAuthority())
+	{
+		NetMulticast_PlayMontage(MontageTypes, PlayRate);
+	}
+	else
+	{
+		Server_PlayMontage(MontageTypes, PlayRate);
+	}
+}
+
+void ASurvivalCharacter::NetMulticast_PlayMontage_Implementation(EMontageType MontageTypes, float PlayRate)
+{
 	bIsPlayingMontage = true;
 
 	switch (MontageTypes)
@@ -1251,6 +1423,11 @@ void ASurvivalCharacter::PlayMontage(EMontageType MontageTypes, float PlayRate)
 		break;
 	}
 	}
+}
+
+void ASurvivalCharacter::Server_PlayMontage_Implementation(EMontageType MontageTypes, float PlayRate)
+{
+	NetMulticast_PlayMontage(MontageTypes, PlayRate);
 }
 
 void ASurvivalCharacter::ServerSet_PlayerYaw_Implementation(float Yaw)
