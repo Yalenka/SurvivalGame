@@ -1,5 +1,5 @@
 # SurvivalGame
- An Open Source Educational purpose project built with UE-4.25 and Updated to UE-4.26
+ An Open Source Educational purpose Survival Game project built with UE-4.25 and Updated to UE-4.26-Chaos
 
 # Usage
 Educational and learning purpose only
