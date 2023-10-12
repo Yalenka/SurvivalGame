@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{8FF0911F-4ED1-7333-EF02-81A86AA573AD}",
+	"EngineAssociation": "{8B91CB96-464E-9008-4B4E-6B99A746A957}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -37,6 +37,10 @@
 				"Linux",
 				"Mac"
 			]
+		},
+		{
+			"Name": "ChaosVehiclesPlugin",
+			"Enabled": true
 		}
 	]
 }
