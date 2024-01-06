@@ -49,7 +49,6 @@ void APickup::OnOverlapBegin(class UPrimitiveComponent* OverlappedComponent, AAc
 			{
 				Character->ItemsInRange.Add(this);
 				Character->OnVisinityUpdates.Broadcast();
-				print("Item overlapped");
 			}
 		}
 	}
@@ -65,7 +64,6 @@ void APickup::OnOverlapEnd(class UPrimitiveComponent* OverlappedComponent, AActo
 			{
 				Character->ItemsInRange.Remove(this);
 				Character->OnVisinityUpdates.Broadcast();
-				print("Item overlapped End");
 			}
 		}
 	}

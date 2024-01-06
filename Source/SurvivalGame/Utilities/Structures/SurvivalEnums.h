@@ -52,7 +52,8 @@ enum class EWeaponAccType : uint8
 {
 	E_None UMETA(DisplayName = "None"),
 	E_Sight UMETA(DisplayName = "Sight"),
-	E_Mag UMETA(DisplayName = "Mag")
+	E_Mag UMETA(DisplayName = "Mag"),
+	E_Muzzle UMETA(DisplayName = "Muzzle")
 };
 
 //All the slots that gear can be equipped to.
