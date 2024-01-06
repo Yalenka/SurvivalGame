@@ -42,14 +42,14 @@ AWeapon::AWeapon()
 	MagMesh->SetCollisionObjectType(ECC_WorldDynamic);
 	MagMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MagMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	MagMesh->SetupAttachment(RootComponent, TEXT("Socket_Muzzle"));
+	MagMesh->SetupAttachment(RootComponent, TEXT("SocketMuzzle"));
 
 	MuzzleMesh = WeaponAccMeshes.Add(EEquippableSlot::EIS_Mag, CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MuzzleMesh")));
 	MuzzleMesh->bReceivesDecals = false;
 	MuzzleMesh->SetCollisionObjectType(ECC_WorldDynamic);
 	MuzzleMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MuzzleMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
-	MuzzleMesh->SetupAttachment(RootComponent, TEXT("Socket_Mag"));
+	MuzzleMesh->SetupAttachment(RootComponent, TEXT("SocketMag"));
 
 
 	bLoopedMuzzleFX = false;

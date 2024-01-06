@@ -50,6 +50,7 @@ enum class WeaponSlot : uint8 {
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEquippedItemsChanged, const EEquippableSlot, Slot, const UEquippableItem*, Item);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnWeaponChangedSignature, class AWeapon*, Weapon, EWeaponPosition, Position, bool, bIsOnHand);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnUpdateGroundList);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnWeaponAccChangedSignature, AWeapon*, Weapon, bool, bIsRemove, UAccItem*, AccItem, EWeaponAccType, AccType);
 
 UCLASS()
 class SURVIVALGAME_API ASurvivalCharacter : public ACharacter
@@ -265,6 +266,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "UI")
 	FOnUpdateGroundList OnVisinityUpdates;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnWeaponAccChangedSignature OnWeaponAccChanged;
 
 protected:
 

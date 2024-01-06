@@ -69,10 +69,26 @@ void UEquippableItem::AddedToInventory(class UInventoryComponent* Inventory)
 		//Dont auto equip item if we are looting from another player
 		if (Character && !Character->IsLooting())
 		{
-			if (!Character->GetEquippedItems().Contains(Slot) && !(ItemType == EItemType::E_Weapon))
+			if (!Character->GetEquippedItems().Contains(Slot) && !(ItemType == EItemType::E_Weapon) /* && !(ItemType == EItemType::E_Accessories)*/)
 			{
-				//Directly equip any items like: backpack, helmet, shirt
-				SetEquipped(true);
+				if (ItemType == EItemType::E_Grenade)
+				{
+					if (!Character->GetEquippedItems().Contains(EEquippableSlot::EIS_Throwable))
+					{
+						if (!Character->GetHoldWeapon())
+						{
+							SetEquipped(true);
+						}
+					}
+				}
+				else
+				{
+					if (!(ItemType == EItemType::E_Accessories))
+					{
+						//Directly equip any items like: backpack, helmet, shirt
+						SetEquipped(true);
+					}
+				}
 			}
 			else
 			{

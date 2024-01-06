@@ -1208,7 +1208,15 @@ bool ASurvivalCharacter::EquipAccessories(class UAccItem* AccItem, bool bFronGro
 					WeaponAccMesh->SetStaticMesh(AccItem->AccMesh);
 					break;
 				}
+				bool bIsRemoved = 0;
+				if (AccItem) {
+					bIsRemoved = 1;
+				}
+				else {
+					bIsRemoved = 0;
+				}
 				OnEquippedItemsChanged.Broadcast(AccItem->Slot, AccItem);
+				OnWeaponAccChanged.Broadcast(WeaponRef, !bIsRemoved, AccItem, AccItem->AccType);
 			}
 		}
 	}

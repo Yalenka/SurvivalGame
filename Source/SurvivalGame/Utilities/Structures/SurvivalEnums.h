@@ -74,3 +74,13 @@ enum class EEquippableSlot : uint8
 	EIS_Mag UMETA(DisplayName = "Mag"),
 	EIS_Muzzle UMETA(DisplayName = "Muzzle")
 };
+
+UENUM(BlueprintType)
+enum class EInventoryLocation : uint8
+{
+	E_None UMETA(DisplayName = "None"),
+	E_BagPack UMETA(DisplayName = "BagPack"),
+	E_Ground UMETA(DisplayName = "Ground"),
+	E_Weapon UMETA(DisplayName = "Weapon"),
+	E_WeaponAcc UMETA(DisplayName = "WeaponAcc")
+};
