@@ -15,6 +15,15 @@ public:
 	// Sets default values for this actor's properties
 	APickup();
 
+	UFUNCTION()
+	void OnOverlapBegin(class UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnOverlapEnd(class UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	//always use VisibleDefaultsOnly or VisibleAnywhere for components
+	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
+	class UBoxComponent* MyBoxComponent;
+
 	//Takes the item to represent and creates the pickup from it. Done on BeginPlay and when a player drops an item on the ground.
 	void InitializePickup(const TSubclassOf<class UItem> ItemClass, const int32 Quantity);
 

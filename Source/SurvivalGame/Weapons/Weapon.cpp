@@ -7,6 +7,7 @@
 #include "Player/SurvivalPlayerController.h"
 #include "Player/SurvivalCharacter.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Components/AudioComponent.h"
 #include "Components/InventoryComponent.h"
 #include "Curves/CurveVector.h"
@@ -16,6 +17,7 @@
 
 #include "Net/UnrealNetwork.h"
 #include "Items/EquippableItem.h"
+#include "Items/AccItem.h"
 #include "Items/AmmoItem.h"
 #include "Items/WeaponItem.h"
 #include "DrawDebugHelpers.h"
@@ -33,6 +35,22 @@ AWeapon::AWeapon()
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	RootComponent = WeaponMesh;
+
+
+	MagMesh = WeaponAccMeshes.Add(EEquippableSlot::EIS_Muzzle, CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MagMesh")));
+	MagMesh->bReceivesDecals = false;
+	MagMesh->SetCollisionObjectType(ECC_WorldDynamic);
+	MagMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MagMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	MagMesh->SetupAttachment(RootComponent, TEXT("Socket_Muzzle"));
+
+	MuzzleMesh = WeaponAccMeshes.Add(EEquippableSlot::EIS_Mag, CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MuzzleMesh")));
+	MuzzleMesh->bReceivesDecals = false;
+	MuzzleMesh->SetCollisionObjectType(ECC_WorldDynamic);
+	MuzzleMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MuzzleMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	MuzzleMesh->SetupAttachment(RootComponent, TEXT("Socket_Mag"));
+
 
 	bLoopedMuzzleFX = false;
 	bLoopedFireAnim = false;
@@ -494,6 +512,15 @@ float AWeapon::GetEquipStartedTime() const
 float AWeapon::GetEquipDuration() const
 {
 	return EquipDuration;
+}
+
+class UStaticMeshComponent* AWeapon::GetSlotStaticmeshComponents(const EEquippableSlot Slot)
+{
+	if (WeaponAccMeshes.Contains(Slot))
+	{
+		return *WeaponAccMeshes.Find(Slot);
+	}
+	return nullptr;
 }
 
 void AWeapon::ClientStartReload_Implementation()

@@ -9,6 +9,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/InteractionComponent.h"
 #include "Components/InventoryComponent.h"
+#include "NavAreas/NavArea_Obstacle.h"
+#include "Components/BoxComponent.h"
 #include "Engine/ActorChannel.h"
 
 // Sets default values
@@ -27,7 +29,46 @@ APickup::APickup()
 	InteractionComponent->OnInteract.AddDynamic(this, &APickup::OnTakePickup);
 	InteractionComponent->SetupAttachment(PickupMesh);
 
+	MyBoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
+	MyBoxComponent->SetBoxExtent(FVector(40.0f, 40.0f, 10.0f));
+	MyBoxComponent->SetupAttachment(PickupMesh);
+	MyBoxComponent->SetHiddenInGame(false);
+	MyBoxComponent->SetCollisionProfileName(TEXT("PickupTrace_Preset"));
+	//MyBoxComponent->AreaClass = UNavArea_Obstacle::StaticClass();
+
 	SetReplicates(true);
+}
+
+void APickup::OnOverlapBegin(class UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (ASurvivalCharacter* Character = Cast<ASurvivalCharacter>(OtherActor))
+	{
+		if (OtherActor == Character)
+		{
+			if (this)
+			{
+				Character->ItemsInRange.Add(this);
+				Character->OnVisinityUpdates.Broadcast();
+				print("Item overlapped");
+			}
+		}
+	}
+}
+
+void APickup::OnOverlapEnd(class UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (ASurvivalCharacter* Character = Cast<ASurvivalCharacter>(OtherActor))
+	{
+		if (OtherActor == Character)
+		{
+			if (this)
+			{
+				Character->ItemsInRange.Remove(this);
+				Character->OnVisinityUpdates.Broadcast();
+				print("Item overlapped End");
+			}
+		}
+	}
 }
 
 void APickup::InitializePickup(const TSubclassOf<class UItem> ItemClass, const int32 Quantity)
@@ -88,6 +129,9 @@ void APickup::BeginPlay()
 	{
 		Item->MarkDirtyForReplication();
 	}
+
+	MyBoxComponent->OnComponentBeginOverlap.AddDynamic(this, &APickup::OnOverlapBegin);
+	MyBoxComponent->OnComponentEndOverlap.AddDynamic(this, &APickup::OnOverlapEnd);
 }
 
 void APickup::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

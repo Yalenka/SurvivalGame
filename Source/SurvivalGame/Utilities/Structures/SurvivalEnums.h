@@ -45,3 +45,31 @@ enum class EMontageType : uint8
 	EIS_ThrowGrenade UMETA(DisplayName = "ThrowGrenade"),
 	EIS_ThrowPetrolBomb UMETA(DisplayName = "ThrowPetrolBomb")
 };
+
+///** Weapon Acc Item Type Enum*/
+UENUM(BlueprintType)
+enum class EWeaponAccType : uint8
+{
+	E_None UMETA(DisplayName = "None"),
+	E_Sight UMETA(DisplayName = "Sight"),
+	E_Mag UMETA(DisplayName = "Mag")
+};
+
+//All the slots that gear can be equipped to.
+UENUM(BlueprintType)
+enum class EEquippableSlot : uint8
+{
+	EIS_Head UMETA(DisplayName = "Head"),
+	EIS_Helmet UMETA(DisplayName = "Helmet"),
+	EIS_Chest UMETA(DisplayName = "Chest"),
+	EIS_Vest UMETA(DisplayName = "Vest"),
+	EIS_Legs UMETA(DisplayName = "Legs"),
+	EIS_Feet UMETA(DisplayName = "Feet"),
+	EIS_Hands UMETA(DisplayName = "Hands"),
+	EIS_Backpack UMETA(DisplayName = "Backpack"),
+	EIS_PrimaryWeapon UMETA(DisplayName = "Primary Weapon"),
+	EIS_SecondaryWeapon UMETA(DisplayName = "Secondary Weapon"),
+	EIS_Throwable UMETA(DisplayName = "Throwable Item"),
+	EIS_Mag UMETA(DisplayName = "Mag"),
+	EIS_Muzzle UMETA(DisplayName = "Muzzle")
+};

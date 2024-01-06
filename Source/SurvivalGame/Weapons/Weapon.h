@@ -259,9 +259,19 @@ protected:
 
 public:
 
-	/** weapon mesh*/
+	/** weapon mesh and acc meshes*/
 	UPROPERTY(EditAnywhere, Category = Components)
 	USkeletalMeshComponent* WeaponMesh;
+
+	UPROPERTY(BlueprintReadOnly, Category = Mesh)
+	TMap<EEquippableSlot, UStaticMeshComponent*> WeaponAccMeshes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UStaticMeshComponent* MagMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UStaticMeshComponent* MuzzleMesh;
+	/**This return the mesh from the slot mesh slot map*/
+	class UStaticMeshComponent* GetSlotStaticmeshComponents(const EEquippableSlot Slot);
 
 protected:
 

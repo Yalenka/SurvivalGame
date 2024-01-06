@@ -6,22 +6,7 @@
 #include "Item.h"
 #include "EquippableItem.generated.h"
 
-//All the slots that gear can be equipped to.
-UENUM(BlueprintType)
-enum class EEquippableSlot : uint8
-{
-	EIS_Head UMETA(DisplayName = "Head"),
-	EIS_Helmet UMETA(DisplayName = "Helmet"),
-	EIS_Chest UMETA(DisplayName = "Chest"),
-	EIS_Vest UMETA(DisplayName = "Vest"),
-	EIS_Legs UMETA(DisplayName = "Legs"),
-	EIS_Feet UMETA(DisplayName = "Feet"),
-	EIS_Hands UMETA(DisplayName = "Hands"),
-	EIS_Backpack UMETA(DisplayName = "Backpack"),
-	EIS_PrimaryWeapon UMETA(DisplayName = "Primary Weapon"),
-	EIS_SecondaryWeapon UMETA(DisplayName = "Secondary Weapon"),
-	EIS_Throwable UMETA(DisplayName = "Throwable Item")
-};
+
 
 /**
  * 

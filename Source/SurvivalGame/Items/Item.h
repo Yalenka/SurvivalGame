@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Utilities/Structures/SurvivalEnums.h"
+#include "Utilities/Structures/SurvivalEnums.h"
 #include "Item.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemModified);

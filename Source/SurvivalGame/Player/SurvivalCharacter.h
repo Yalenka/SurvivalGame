@@ -47,19 +47,9 @@ enum class WeaponSlot : uint8 {
 	Grenade
 };
 
-///** Weapon Positions enum on character*/
-//UENUM(BlueprintType)
-//enum class EWeaponPosition : uint8
-//{
-//	E_Left UMETA(DisplayName = "LeftPosition"),
-//	E_Right UMETA(DisplayName = "RightPosition"),
-//	E_Pan UMETA(DisplayName = "PanPosition"),
-//	E_Grenade UMETA(DisplayName = "GrenadePosition"),
-//	E_MAX UMETA(DisplayName = "EmptyPosition")
-//
-//};
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEquippedItemsChanged, const EEquippableSlot, Slot, const UEquippableItem*, Item);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnWeaponChangedSignature, class AWeapon*, Weapon, EWeaponPosition, Position, bool, bIsOnHand);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnUpdateGroundList);
 
 UCLASS()
 class SURVIVALGAME_API ASurvivalCharacter : public ACharacter
@@ -273,6 +263,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnWeaponChangedSignature OnWeaponChanged;
 
+	UPROPERTY(BlueprintAssignable, Category = "UI")
+	FOnUpdateGroundList OnVisinityUpdates;
+
 protected:
 
 	UFUNCTION(Server, Reliable)
@@ -364,6 +357,10 @@ protected:
 	void OnDeath();
 
 public:
+
+	//Used to show versinity items 
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Items")
+	TArray<class APickup*> ItemsInRange;
 
 	UPROPERTY(EditDefaultsOnly, Category = Movement)
 	float SprintSpeed;
@@ -529,6 +526,11 @@ public:
 	void SwitchToSecondaryWeapon();
 	UFUNCTION(Server, Reliable)
 	void Server_SwitchToSecondaryWeapon();
+
+	//This will be called in blueprints, the input data will be given in real time
+	//when the weapon widget will be valid and and acc object is dragged in UI
+	UFUNCTION(BlueprintCallable)
+	bool EquipAccessories(class UAccItem* AccItem, bool bFronGround, class AWeapon* Weapon);
 
 	/**Used to store the primary weapon as ready equipped weapon to make it ready to switch*/
 	UPROPERTY(Replicated)

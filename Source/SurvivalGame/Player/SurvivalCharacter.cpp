@@ -12,6 +12,7 @@
 #include "Components/SceneCaptureComponent2D.h"
 #include "../Items/EquippableItem.h"
 #include "../Items/GearItem.h"
+#include "../Items/AccItem.h"
 #include "../Items/WeaponItem.h"
 #include "../Items/ThrowableItem.h"
 #include "Materials/MaterialInstance.h"
@@ -45,15 +46,17 @@ ASurvivalCharacter::ASurvivalCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>("SpringArmComponent");
-	SpringArmComponent->SetupAttachment(RootComponent);
-	SpringArmComponent->SetRelativeLocation(FVector(90.0f, 60.0f, 170.0f));
+	// Setup Settings and Attachments of SpringArm and TPP Camera Components
+	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
+	SpringArmComponent->SetupAttachment(RootComponent/*, FName("camera_tppSocket")*/);
+	SpringArmComponent->bUsePawnControlRotation = true;
+	SpringArmComponent->SetRelativeLocation(FVector(0.0f, 25.0f, 100.0f));
 	SpringArmComponent->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
-	SpringArmComponent->TargetArmLength = 350.0f;
+	SpringArmComponent->TargetArmLength = 200.0f;
 
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
 	CameraComponent->SetupAttachment(SpringArmComponent);
-	CameraComponent->bUsePawnControlRotation = true;
+	CameraComponent->bUsePawnControlRotation = false;
 
 	HelmetMesh = PlayerMeshes.Add(EEquippableSlot::EIS_Helmet, CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HelmetMesh")));
 	ChestMesh = PlayerMeshes.Add(EEquippableSlot::EIS_Chest, CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ChestMesh")));
@@ -170,6 +173,7 @@ void ASurvivalCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(ASurvivalCharacter, ReadyEquipWeapon);
 	DOREPLIFETIME(ASurvivalCharacter, bIsPlayingMontage);
 	DOREPLIFETIME(ASurvivalCharacter, Killer);
+	DOREPLIFETIME(ASurvivalCharacter, ItemsInRange);
 
 	DOREPLIFETIME_CONDITION(ASurvivalCharacter, LootSource, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(ASurvivalCharacter, Health, COND_OwnerOnly);
@@ -632,49 +636,54 @@ void ASurvivalCharacter::StopFire()
 
 void ASurvivalCharacter::BeginMeleeAttack()
 {
-	if (GetWorld()->TimeSince(LastMeleeAttackTime) > MeleeAttackMontage->GetPlayLength())
+	print("Melee Attack Performed, but no animation montage found for melee attacks");
+
+	if (AnimMontages.Num() > 0)
 	{
-		FHitResult Hit;
-		FCollisionShape Shape = FCollisionShape::MakeSphere(15.f);
-
-		FVector StartTrace = CameraComponent->GetComponentLocation();
-		FVector EndTrace = (CameraComponent->GetComponentRotation().Vector() * MeleeAttackDistance) + StartTrace;
-
-		FCollisionQueryParams QueryParams = FCollisionQueryParams("MeleeSweep", false, this);
-
-		if (!GetMesh()->GetAnimInstance()->Montage_IsPlaying(MeleeAttackMontage))
+		if (GetWorld()->TimeSince(LastMeleeAttackTime) > MeleeAttackMontage->GetPlayLength())
 		{
-			//PlayRandom Anim Montage in range
-			int32 MontageIndex = FMath::RandRange(0, 2);
-			if (AnimMontages.IsValidIndex(MontageIndex))
-			{
-				MeleeAttackMontage = AnimMontages[MontageIndex];
+			FHitResult Hit;
+			FCollisionShape Shape = FCollisionShape::MakeSphere(15.f);
 
-				if (MeleeAttackMontage)
+			FVector StartTrace = CameraComponent->GetComponentLocation();
+			FVector EndTrace = (CameraComponent->GetComponentRotation().Vector() * MeleeAttackDistance) + StartTrace;
+
+			FCollisionQueryParams QueryParams = FCollisionQueryParams("MeleeSweep", false, this);
+
+			if (!GetMesh()->GetAnimInstance()->Montage_IsPlaying(MeleeAttackMontage))
+			{
+				//PlayRandom Anim Montage in range
+				int32 MontageIndex = FMath::RandRange(0, 2);
+				if (AnimMontages.IsValidIndex(MontageIndex))
 				{
-					PlayAnimMontage(MeleeAttackMontage);
+					MeleeAttackMontage = AnimMontages[MontageIndex];
+
+					if (MeleeAttackMontage)
+					{
+						PlayAnimMontage(MeleeAttackMontage);
+					}
 				}
 			}
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Montage is playing"));
-		}
-
-		if (GetWorld()->SweepSingleByChannel(Hit, StartTrace, EndTrace, FQuat(), COLLISION_WEAPON, Shape, QueryParams))
-		{
-			if (ASurvivalCharacter* HitPlayer = Cast<ASurvivalCharacter>(Hit.GetActor()))
+			else
 			{
-				if (ASurvivalPlayerController* PC = Cast<ASurvivalPlayerController>(GetController()))
+				UE_LOG(LogTemp, Warning, TEXT("Montage is playing"));
+			}
+
+			if (GetWorld()->SweepSingleByChannel(Hit, StartTrace, EndTrace, FQuat(), COLLISION_WEAPON, Shape, QueryParams))
+			{
+				if (ASurvivalCharacter* HitPlayer = Cast<ASurvivalCharacter>(Hit.GetActor()))
 				{
-					PC->ClientShotHitConfirmed();
+					if (ASurvivalPlayerController* PC = Cast<ASurvivalPlayerController>(GetController()))
+					{
+						PC->ClientShotHitConfirmed();
+					}
 				}
 			}
+
+			ServerProcessMeleeHit(Hit);
+
+			LastMeleeAttackTime = GetWorld()->GetTimeSeconds();
 		}
-
-		ServerProcessMeleeHit(Hit);
-
-		LastMeleeAttackTime = GetWorld()->GetTimeSeconds();
 	}
 }
 
@@ -1148,6 +1157,62 @@ void ASurvivalCharacter::SwitchToSecondaryWeapon()
 	{
 		Server_SwitchToSecondaryWeapon();
 	}
+}
+
+bool ASurvivalCharacter::EquipAccessories(class UAccItem* AccItem, bool bFronGround, class AWeapon* Weapon)
+{
+	if (IsValid(Weapon))
+	{
+		if (AccItem)
+		{
+			AWeapon* WeaponRef = nullptr;
+			switch (Weapon->Position)
+			{
+			case EWeaponPosition::E_Left:
+				if (IsValid(GetPrimaryWeapon()))
+				{
+					print("Primary Weapon want to update Acc");
+					WeaponRef = GetPrimaryWeapon();
+				}
+				else
+				{
+					print("HoldGun want to update Acc");
+					WeaponRef = GetHoldWeapon();
+				}
+				break;
+			case EWeaponPosition::E_Right:
+				if (IsValid(GetSecondaryWeapon()))
+				{
+					print("Secondary Weapon want to update Acc");
+					WeaponRef = GetSecondaryWeapon();
+				}
+				else
+				{
+					print("HoldGun want to update Acc");
+					WeaponRef = GetHoldWeapon();
+				}
+				break;
+			default:
+				break;
+			}
+			if (UStaticMeshComponent* WeaponAccMesh = WeaponRef->GetSlotStaticmeshComponents(AccItem->Slot))
+			{
+				switch (AccItem->Slot)
+				{
+				default:
+					break;
+				case EEquippableSlot::EIS_Mag:
+					WeaponAccMesh->SetStaticMesh(AccItem->AccMesh);
+					break;
+				case EEquippableSlot::EIS_Muzzle:
+					WeaponAccMesh->SetStaticMesh(AccItem->AccMesh);
+					break;
+				}
+				OnEquippedItemsChanged.Broadcast(AccItem->Slot, AccItem);
+			}
+		}
+	}
+	return false;
 }
 
 void ASurvivalCharacter::Server_SwitchToSecondaryWeapon_Implementation()
@@ -1701,9 +1766,10 @@ void ASurvivalCharacter::PerformInteractionCheck()
 	if (GetWorld()->LineTraceSingleByChannel(TraceHit, TraceStart, TraceEnd, ECC_Visibility, QueryParams))
 	{
 		//Check if we hit an interactable object
-		if (TraceHit.GetActor())
+		//Check if we hit an interactable object
+		if (const AActor* HitActor = TraceHit.GetActor())
 		{
-			if (UInteractionComponent* InteractionComponent = Cast<UInteractionComponent>(TraceHit.GetActor()->GetComponentByClass(UInteractionComponent::StaticClass())))
+			if (UInteractionComponent* InteractionComponent = Cast<UInteractionComponent>(HitActor->GetComponentByClass(UInteractionComponent::StaticClass())))
 			{
 				float Distance = (TraceStart - TraceHit.ImpactPoint).Size();
 				if (InteractionComponent != GetInteractable() && Distance <= InteractionComponent->InteractionDistance)
