@@ -534,10 +534,10 @@ public:
 	//This will be called in blueprints, the input data will be given in real time
 	//when the weapon widget will be valid and and acc object is dragged in UI
 	UFUNCTION(BlueprintCallable)
-	bool EquipAccessories(class UItem* ItemBase, bool bFronGround, class AWeapon* Weapon);
+	bool EquipAccessories(class UItem* ItemBase, bool bFromGround, class AWeapon* Weapon);
 	void UpdateWeaponAcc(class UAccItem* ItemWeaponAcc, EWeaponPosition Position, EWeaponAccType AccType);
 	UPROPERTY(BlueprintReadOnly)
-	class AWeapon* AccOwnerWeapon = nullptr;
+	class AWeapon* AccOwnerWeapon;
 
 	/**Used to store the primary weapon as ready equipped weapon to make it ready to switch*/
 	UPROPERTY(Replicated)

@@ -262,9 +262,9 @@ protected:
 
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(BlueprintReadOnly)
 	class UAccItem* AccMagObject;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(BlueprintReadOnly)
 	class UAccItem* AccMuzzleObject;
 	void UpdateMag(class UAccItem* MagObject);
 	void UpdateMuzzle(class UAccItem* MuzzleObject);

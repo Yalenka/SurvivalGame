@@ -526,6 +526,7 @@ void AWeapon::UpdateMag(class UAccItem* MagObject)
 				MagMesh->SetStaticMesh(AccMagObject->AccMesh);
 				if (!MagMesh) { return; }
 				MagMesh->AttachToComponent(WeaponMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true), FName(AccMagObject->AttachmentSocket));
+				print("UpdateMag Called");
 				return;
 			}
 		}
@@ -544,6 +545,7 @@ void AWeapon::UpdateMuzzle(class UAccItem* MuzzleObject)
 				MuzzleMesh->SetStaticMesh(AccMuzzleObject->AccMesh);
 				if (!MuzzleMesh) { return; }
 				MuzzleMesh->AttachToComponent(WeaponMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true), FName(AccMuzzleObject->AttachmentSocket));
+				print("UpdateMuzzle Called");
 				return;
 			}
 		}

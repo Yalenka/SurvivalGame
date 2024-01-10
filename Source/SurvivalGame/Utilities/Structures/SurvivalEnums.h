@@ -72,7 +72,8 @@ enum class EEquippableSlot : uint8
 	EIS_SecondaryWeapon UMETA(DisplayName = "Secondary Weapon"),
 	EIS_Throwable UMETA(DisplayName = "Throwable Item"),
 	EIS_Mag UMETA(DisplayName = "Mag"),
-	EIS_Muzzle UMETA(DisplayName = "Muzzle")
+	EIS_Muzzle UMETA(DisplayName = "Muzzle"),
+	EIS_None UMETA(DisplayName = "None")
 };
 
 UENUM(BlueprintType)

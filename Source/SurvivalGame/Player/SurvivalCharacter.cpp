@@ -1159,7 +1159,7 @@ void ASurvivalCharacter::SwitchToSecondaryWeapon()
 	}
 }
 
-bool ASurvivalCharacter::EquipAccessories(class UItem* ItemBase, bool bFronGround, class AWeapon* Weapon)
+bool ASurvivalCharacter::EquipAccessories(class UItem* ItemBase, bool bFromGround, class AWeapon* Weapon)
 {
 	if (IsValid(Weapon))
 	{
@@ -1184,6 +1184,7 @@ bool ASurvivalCharacter::EquipAccessories(class UItem* ItemBase, bool bFronGroun
 			default:
 				break;
 			}
+			//UpdateWeaponAcc(ItemWeaponAcc, Weapon->Position, AccType);
 			UpdateWeaponAcc(ItemWeaponAcc, Weapon->Position, ItemWeaponAcc->AccType);
 		}
 	}
@@ -1201,10 +1202,12 @@ void ASurvivalCharacter::UpdateWeaponAcc(class UAccItem* ItemWeaponAcc, EWeaponP
 			if (IsValid(GetPrimaryWeapon()))
 			{
 				AccOwnerWeapon = GetPrimaryWeapon();
+				print("PrimaryGun want to update");
 			}
 			else
 			{
 				AccOwnerWeapon = GetHoldWeapon();
+				print("HoldGun want to update");
 			}
 		}
 		break;
@@ -1213,44 +1216,48 @@ void ASurvivalCharacter::UpdateWeaponAcc(class UAccItem* ItemWeaponAcc, EWeaponP
 			if (IsValid(GetSecondaryWeapon()))
 			{
 				AccOwnerWeapon = GetSecondaryWeapon();
+				print("SecondaryGun want to update");
 			}
 			else
 			{
 				AccOwnerWeapon = GetHoldWeapon();
+				print("GetHoldGun want to update");
 			}
 		}
 		break;
 		default:
 			break;
 		}
-
-		switch (AccType)
+		if (IsValid(AccOwnerWeapon))
 		{
-		case EWeaponAccType::E_Muzzle:
-		{
-			AccOwnerWeapon->UpdateMuzzle(ItemWeaponAcc);
-		}
-		break;
-		case EWeaponAccType::E_Mag:
-		{
-			AccOwnerWeapon->UpdateMag(ItemWeaponAcc);
-		}
-		break;
-		default:
+			switch (AccType)
+			{
+			case EWeaponAccType::E_Muzzle:
+			{
+				AccOwnerWeapon->UpdateMuzzle(ItemWeaponAcc);
+			}
 			break;
-
-
-			bool bCheckValid = 0;
-			if (ItemWeaponAcc) {
-				bCheckValid = 1;
+			case EWeaponAccType::E_Mag:
+			{
+				AccOwnerWeapon->UpdateMag(ItemWeaponAcc);
 			}
-			else {
-				bCheckValid = 0;
-			}
+			break;
+			default:
+				break;
 
-			//GetEquippedItems().Add(ItemWeaponAcc->Slot, ItemWeaponAcc);
-			//OnEquippedItemsChanged.Broadcast(ItemWeaponAcc->Slot, ItemWeaponAcc);
-			OnWeaponAccChanged.Broadcast(AccOwnerWeapon, !bCheckValid, ItemWeaponAcc, AccType);
+
+				bool bCheckValid = 0;
+				if (ItemWeaponAcc) {
+					bCheckValid = 1;
+				}
+				else {
+					bCheckValid = 0;
+				}
+
+				//GetEquippedItems().Add(ItemWeaponAcc->Slot, ItemWeaponAcc);
+				//OnEquippedItemsChanged.Broadcast(ItemWeaponAcc->Slot, ItemWeaponAcc);
+				OnWeaponAccChanged.Broadcast(AccOwnerWeapon, !bCheckValid, ItemWeaponAcc, AccType);
+			}
 		}
 	}
 }
