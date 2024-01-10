@@ -514,6 +514,42 @@ float AWeapon::GetEquipDuration() const
 	return EquipDuration;
 }
 
+void AWeapon::UpdateMag(class UAccItem* MagObject)
+{
+	AccMagObject = MagObject;
+	if (IsValid(WeaponItemClass))
+	{
+		if (UWeaponItem* Datas = WeaponItemClass.GetDefaultObject())
+		{
+			if (AccMagObject && AccMagObject->AccMesh != nullptr)
+			{
+				MagMesh->SetStaticMesh(AccMagObject->AccMesh);
+				if (!MagMesh) { return; }
+				MagMesh->AttachToComponent(WeaponMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true), FName(AccMagObject->AttachmentSocket));
+				return;
+			}
+		}
+	}
+}
+
+void AWeapon::UpdateMuzzle(class UAccItem* MuzzleObject)
+{
+	AccMuzzleObject = MuzzleObject;
+	if (IsValid(WeaponItemClass))
+	{
+		if (UWeaponItem* Datas = WeaponItemClass.GetDefaultObject())
+		{
+			if (AccMuzzleObject && AccMuzzleObject->AccMesh != nullptr)
+			{
+				MuzzleMesh->SetStaticMesh(AccMuzzleObject->AccMesh);
+				if (!MuzzleMesh) { return; }
+				MuzzleMesh->AttachToComponent(WeaponMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true), FName(AccMuzzleObject->AttachmentSocket));
+				return;
+			}
+		}
+	}
+}
+
 class UStaticMeshComponent* AWeapon::GetSlotStaticmeshComponents(const EEquippableSlot Slot)
 {
 	if (WeaponAccMeshes.Contains(Slot))

@@ -244,6 +244,9 @@ protected:
 	UPROPERTY(Replicated, BlueprintReadWrite, Transient)
 	class UWeaponItem* Item;
 
+	UPROPERTY(EditDefaultsOnly, Transient)
+	TSubclassOf<class UWeaponItem> WeaponItemClass;
+
 protected:
 	/** pawn owner */
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_PawnOwner)
@@ -259,9 +262,16 @@ protected:
 
 public:
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UAccItem* AccMagObject;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UAccItem* AccMuzzleObject;
+	void UpdateMag(class UAccItem* MagObject);
+	void UpdateMuzzle(class UAccItem* MuzzleObject);
+
 	/** weapon mesh and acc meshes*/
 	UPROPERTY(EditAnywhere, Category = Components)
-	USkeletalMeshComponent* WeaponMesh;
+	class USkeletalMeshComponent* WeaponMesh;
 
 	UPROPERTY(BlueprintReadOnly, Category = Mesh)
 	TMap<EEquippableSlot, UStaticMeshComponent*> WeaponAccMeshes;

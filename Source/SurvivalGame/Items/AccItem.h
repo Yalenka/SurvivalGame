@@ -40,4 +40,6 @@ public:
 	//Mag Related
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Weapon Accessories")
 	float ClipRate;
+
+	virtual void Use(class ASurvivalCharacter* Character) override;
 };

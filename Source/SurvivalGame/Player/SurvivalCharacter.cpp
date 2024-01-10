@@ -1159,70 +1159,101 @@ void ASurvivalCharacter::SwitchToSecondaryWeapon()
 	}
 }
 
-bool ASurvivalCharacter::EquipAccessories(class UAccItem* AccItem, bool bFronGround, class AWeapon* Weapon)
+bool ASurvivalCharacter::EquipAccessories(class UItem* ItemBase, bool bFronGround, class AWeapon* Weapon)
 {
 	if (IsValid(Weapon))
 	{
-		if (AccItem)
+		if (ItemBase)
 		{
-			AWeapon* WeaponRef = nullptr;
-			switch (Weapon->Position)
+			UAccItem* ItemWeaponAcc = Cast<UAccItem>(ItemBase);
+			EWeaponAccType AccType = ItemWeaponAcc->AccType;
+			UAccItem* ReplacedAccObject = nullptr;
+
+			switch (AccType)
 			{
-			case EWeaponPosition::E_Left:
-				if (IsValid(GetPrimaryWeapon()))
-				{
-					print("Primary Weapon want to update Acc");
-					WeaponRef = GetPrimaryWeapon();
-				}
-				else
-				{
-					print("HoldGun want to update Acc");
-					WeaponRef = GetHoldWeapon();
-				}
+			case EWeaponAccType::E_Muzzle:
+			{
+				ReplacedAccObject = Weapon->AccMuzzleObject;
+			}
 				break;
-			case EWeaponPosition::E_Right:
-				if (IsValid(GetSecondaryWeapon()))
-				{
-					print("Secondary Weapon want to update Acc");
-					WeaponRef = GetSecondaryWeapon();
-				}
-				else
-				{
-					print("HoldGun want to update Acc");
-					WeaponRef = GetHoldWeapon();
-				}
+			case EWeaponAccType::E_Mag:
+			{
+				ReplacedAccObject = Weapon->AccMagObject;
+			}
 				break;
 			default:
 				break;
 			}
-			if (UStaticMeshComponent* WeaponAccMesh = WeaponRef->GetSlotStaticmeshComponents(AccItem->Slot))
-			{
-				switch (AccItem->Slot)
-				{
-				default:
-					break;
-				case EEquippableSlot::EIS_Mag:
-					WeaponAccMesh->SetStaticMesh(AccItem->AccMesh);
-					break;
-				case EEquippableSlot::EIS_Muzzle:
-					WeaponAccMesh->SetStaticMesh(AccItem->AccMesh);
-					break;
-				}
-				bool bIsRemoved = 0;
-				if (AccItem) {
-					bIsRemoved = 1;
-				}
-				else {
-					bIsRemoved = 0;
-				}
-				OnEquippedItemsChanged.Broadcast(AccItem->Slot, AccItem);
-				OnWeaponAccChanged.Broadcast(WeaponRef, !bIsRemoved, AccItem, AccItem->AccType);
-			}
+			UpdateWeaponAcc(ItemWeaponAcc, Weapon->Position, ItemWeaponAcc->AccType);
 		}
 	}
 	return false;
 }
 
+void ASurvivalCharacter::UpdateWeaponAcc(class UAccItem* ItemWeaponAcc, EWeaponPosition Position, EWeaponAccType AccType)
+{
+	if (ItemWeaponAcc)
+	{
+		switch (Position)
+		{
+		case EWeaponPosition::E_Left:
+		{
+			if (IsValid(GetPrimaryWeapon()))
+			{
+				AccOwnerWeapon = GetPrimaryWeapon();
+			}
+			else
+			{
+				AccOwnerWeapon = GetHoldWeapon();
+			}
+		}
+		break;
+		case EWeaponPosition::E_Right:
+		{
+			if (IsValid(GetSecondaryWeapon()))
+			{
+				AccOwnerWeapon = GetSecondaryWeapon();
+			}
+			else
+			{
+				AccOwnerWeapon = GetHoldWeapon();
+			}
+		}
+		break;
+		default:
+			break;
+		}
+
+		switch (AccType)
+		{
+		case EWeaponAccType::E_Muzzle:
+		{
+			AccOwnerWeapon->UpdateMuzzle(ItemWeaponAcc);
+		}
+		break;
+		case EWeaponAccType::E_Mag:
+		{
+			AccOwnerWeapon->UpdateMag(ItemWeaponAcc);
+		}
+		break;
+		default:
+			break;
+
+
+			bool bCheckValid = 0;
+			if (ItemWeaponAcc) {
+				bCheckValid = 1;
+			}
+			else {
+				bCheckValid = 0;
+			}
+
+			//GetEquippedItems().Add(ItemWeaponAcc->Slot, ItemWeaponAcc);
+			//OnEquippedItemsChanged.Broadcast(ItemWeaponAcc->Slot, ItemWeaponAcc);
+			OnWeaponAccChanged.Broadcast(AccOwnerWeapon, !bCheckValid, ItemWeaponAcc, AccType);
+		}
+	}
+}
 void ASurvivalCharacter::Server_SwitchToSecondaryWeapon_Implementation()
 {
 	SwitchToSecondaryWeapon();
