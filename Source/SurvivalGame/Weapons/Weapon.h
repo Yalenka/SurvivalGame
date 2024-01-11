@@ -266,7 +266,10 @@ public:
 	class UAccItem* AccMagObject;
 	UPROPERTY(BlueprintReadOnly)
 	class UAccItem* AccMuzzleObject;
-	void UpdateMag(class UAccItem* MagObject);
+	void UpdateMag(class UAccItem* MagObject, UStaticMeshComponent* Accmesh);
+	//The mesh to have equipped if we dont have an item equipped - ie the bare skin meshes
+	UPROPERTY(BlueprintReadOnly, Category = Mesh)
+	TMap<EEquippableSlot, UStaticMesh*> DefaultAccMeshes;
 	void UpdateMuzzle(class UAccItem* MuzzleObject);
 
 	/** weapon mesh and acc meshes*/

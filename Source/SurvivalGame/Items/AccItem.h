@@ -42,4 +42,6 @@ public:
 	float ClipRate;
 
 	virtual void Use(class ASurvivalCharacter* Character) override;
+	virtual bool Equip(class ASurvivalCharacter* Character) override;
+	virtual bool UnEquip(class ASurvivalCharacter* Character) override;
 };

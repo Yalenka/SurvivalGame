@@ -246,6 +246,10 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE TMap<EEquippableSlot, UEquippableItem*> GetEquippedItems() const { return EquippedItems; }
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE TMap<EEquippableSlot, UEquippableItem*> GetPrimaryWeaponEquippedItems() const { return PrimaryWeaponEquippedItems; }
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE TMap<EEquippableSlot, UEquippableItem*> GetSecondaryWeaponEquippedItems() const { return SecondaryWeaponEquippedItems; }
 
 	UFUNCTION(BlueprintCallable, Category = "Weapons")
 	FORCEINLINE class AWeapon* GetHoldWeapon() const { return EquippedWeapon; }
@@ -286,6 +290,13 @@ protected:
 	//Allows for efficient access of equipped items
 	UPROPERTY(VisibleAnywhere, Category = "Items")
 	TMap<EEquippableSlot, UEquippableItem*> EquippedItems;
+	//Allows for efficient access of equipped items for Primary weapon
+	UPROPERTY(VisibleAnywhere, Category = "Items")
+	TMap<EEquippableSlot, UEquippableItem*> PrimaryWeaponEquippedItems;
+
+	//Allows for efficient access of equipped items for secondary weapon
+	UPROPERTY(VisibleAnywhere, Category = "Items")
+	TMap<EEquippableSlot, UEquippableItem*> SecondaryWeaponEquippedItems;
 
 	UPROPERTY(ReplicatedUsing = OnRep_Health, BlueprintReadWrite, Category = "Health")
 	float Health;
@@ -531,12 +542,19 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_SwitchToSecondaryWeapon();
 
+
+	/**These should never be called directly - UGearItem call these on top of EquipItem*/
+	void EquipAcc(class UAccItem* Acc);
+	void UnEquipAcc(const EEquippableSlot Slot, class UAccItem* Acc);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_EquipAccessories(class UItem* ItemBase, bool bFronGround, class AWeapon* Weapon);
 	//This will be called in blueprints, the input data will be given in real time
 	//when the weapon widget will be valid and and acc object is dragged in UI
 	UFUNCTION(BlueprintCallable)
 	bool EquipAccessories(class UItem* ItemBase, bool bFromGround, class AWeapon* Weapon);
 	void UpdateWeaponAcc(class UAccItem* ItemWeaponAcc, EWeaponPosition Position, EWeaponAccType AccType);
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Replicated)
 	class AWeapon* AccOwnerWeapon;
 
 	/**Used to store the primary weapon as ready equipped weapon to make it ready to switch*/

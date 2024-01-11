@@ -514,8 +514,10 @@ float AWeapon::GetEquipDuration() const
 	return EquipDuration;
 }
 
-void AWeapon::UpdateMag(class UAccItem* MagObject)
+void AWeapon::UpdateMag(class UAccItem* MagObject, UStaticMeshComponent* Accmesh)
 {
+	//Validity check for early return if not valid
+	if (!MagObject || !Accmesh) { return; }
 	AccMagObject = MagObject;
 	if (IsValid(WeaponItemClass))
 	{
@@ -523,10 +525,8 @@ void AWeapon::UpdateMag(class UAccItem* MagObject)
 		{
 			if (AccMagObject && AccMagObject->AccMesh != nullptr)
 			{
-				MagMesh->SetStaticMesh(AccMagObject->AccMesh);
-				if (!MagMesh) { return; }
-				MagMesh->AttachToComponent(WeaponMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true), FName(AccMagObject->AttachmentSocket));
-				print("UpdateMag Called");
+				Accmesh->SetStaticMesh(AccMagObject->AccMesh);
+				Accmesh->AttachToComponent(WeaponMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true), FName(TEXT("SocketMag")));
 				return;
 			}
 		}

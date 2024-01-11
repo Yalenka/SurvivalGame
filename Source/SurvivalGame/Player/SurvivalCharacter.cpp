@@ -171,6 +171,7 @@ void ASurvivalCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME(ASurvivalCharacter, WeaponOne_1);
 	DOREPLIFETIME(ASurvivalCharacter, WeaponTwo_2);
 	DOREPLIFETIME(ASurvivalCharacter, ReadyEquipWeapon);
+	DOREPLIFETIME(ASurvivalCharacter, AccOwnerWeapon);
 	DOREPLIFETIME(ASurvivalCharacter, bIsPlayingMontage);
 	DOREPLIFETIME(ASurvivalCharacter, Killer);
 	DOREPLIFETIME(ASurvivalCharacter, ItemsInRange);
@@ -321,9 +322,47 @@ void ASurvivalCharacter::ItemRemovedFromInventory(class UItem* Item)
 
 bool ASurvivalCharacter::EquipItem(class UEquippableItem* Item)
 {
-	EquippedItems.Add(Item->Slot, Item);
+	/*EquippedItems.Add(Item->Slot, Item);
 	OnEquippedItemsChanged.Broadcast(Item->Slot, Item);
-	return true;
+	return true;*/
+
+	if (Item)
+	{
+		if (Item->ItemType != EItemType::E_Accessories)
+		{
+			EquippedItems.Add(Item->Slot, Item);
+			OnEquippedItemsChanged.Broadcast(Item->Slot, Item);
+			return true;
+		}
+		else
+		{
+			if (Item->ItemType == EItemType::E_Accessories)
+			{
+				switch (AccOwnerWeapon->Position)
+				{
+				default:
+					break;
+				case EWeaponPosition::E_Left:
+				{
+					PrimaryWeaponEquippedItems.Add(Item->Slot, Item);
+					OnEquippedItemsChanged.Broadcast(Item->Slot, Item);
+					print("Weapon is E_Left in use function");
+					return true;
+				}
+				break;
+				case EWeaponPosition::E_Right:
+				{
+					SecondaryWeaponEquippedItems.Add(Item->Slot, Item);
+					OnEquippedItemsChanged.Broadcast(Item->Slot, Item);
+					print("Weapon is E_Right in use function");
+					return true;
+				}
+				break;
+				}
+			}
+		}
+	}
+	return false;
 }
 
 bool ASurvivalCharacter::UnEquipItem(class UEquippableItem* Item)
@@ -751,6 +790,32 @@ void ASurvivalCharacter::OnRep_Killer()
 	{
 		Equippable->SetEquipped(false);
 	}
+	if (HasAuthority())
+	{
+		TArray<UEquippableItem*>Equipables;
+		EquippedItems.GenerateValueArray(Equipables);
+		for (auto& EquippableItem : Equipables)
+		{
+			if (!IsValid(EquippableItem)) { return; }
+			EquippableItem->SetEquipped(false);
+		}
+
+		TArray<UEquippableItem*>PrimaryWeaponAccEquippables;
+		PrimaryWeaponEquippedItems.GenerateValueArray(PrimaryWeaponAccEquippables);
+		for (auto& PrimaryAcccItem : PrimaryWeaponAccEquippables)
+		{
+			if (!IsValid(PrimaryAcccItem)) { return; }
+			PrimaryAcccItem->SetEquipped(false);
+		}
+
+		TArray<UEquippableItem*>SecondaryWeaponAccEquippables;
+		SecondaryWeaponEquippedItems.GenerateValueArray(SecondaryWeaponAccEquippables);
+		for (auto& SecondaryAcccItem : SecondaryWeaponAccEquippables)
+		{
+			if (!IsValid(SecondaryAcccItem)) { return; }
+			SecondaryAcccItem->SetEquipped(false);
+		}
+	}
 
 	if (IsLocallyControlled())
 	{
@@ -1159,8 +1224,67 @@ void ASurvivalCharacter::SwitchToSecondaryWeapon()
 	}
 }
 
+void ASurvivalCharacter::EquipAcc(class UAccItem* Acc)
+{
+	if (AccOwnerWeapon)
+	{
+		if (UStaticMeshComponent* Accmesh = AccOwnerWeapon->GetSlotStaticmeshComponents(Acc->Slot))
+		{
+			switch (Acc->Slot)
+			{
+			default:
+				break;
+			case EEquippableSlot::EIS_Mag:
+			{
+				AccOwnerWeapon->UpdateMag(Acc, Accmesh);
+			}
+			break;
+			}
+		}
+	}
+}
+
+void ASurvivalCharacter::UnEquipAcc(const EEquippableSlot Slot, class UAccItem* Acc)
+{
+	if (UStaticMeshComponent* AccMesh = AccOwnerWeapon->GetSlotStaticmeshComponents(Slot))
+	{
+		if (UStaticMesh* DefaultAccMesh = *AccOwnerWeapon->DefaultAccMeshes.Find(Slot))
+		{
+			AccMesh->SetStaticMesh(DefaultAccMesh);
+		}
+		else
+		{
+			if (UWeaponItem* Datas = AccOwnerWeapon->WeaponItemClass.GetDefaultObject())
+			{
+				if (Datas->DefaultMag != nullptr)
+				{
+					switch (Acc->AccType)
+					{
+					default:
+						break;
+					case EWeaponAccType::E_Mag:
+						/**
+						 * If the weapon comes with mudular parts, it will have a default mag which will need to be attached if the current mag unequipped
+						 */
+
+						//AccMesh->SetStaticMesh(Datas->DefaultMag);
+						break;
+					}
+				}
+			}
+		}
+		//For some acc like muzzle, grip there is no naked mesh
+	}
+}
+
+void ASurvivalCharacter::Server_EquipAccessories_Implementation(class UItem* ItemBase, bool bFronGround, class AWeapon* Weapon)
+{
+	EquipAccessories(ItemBase, bFronGround, Weapon);
+}
+
 bool ASurvivalCharacter::EquipAccessories(class UItem* ItemBase, bool bFromGround, class AWeapon* Weapon)
 {
+	if (!HasAuthority()) { Server_EquipAccessories( ItemBase, bFromGround, Weapon); return false; }
 	if (IsValid(Weapon))
 	{
 		if (ItemBase)
@@ -1184,7 +1308,6 @@ bool ASurvivalCharacter::EquipAccessories(class UItem* ItemBase, bool bFromGroun
 			default:
 				break;
 			}
-			//UpdateWeaponAcc(ItemWeaponAcc, Weapon->Position, AccType);
 			UpdateWeaponAcc(ItemWeaponAcc, Weapon->Position, ItemWeaponAcc->AccType);
 		}
 	}
@@ -1234,12 +1357,12 @@ void ASurvivalCharacter::UpdateWeaponAcc(class UAccItem* ItemWeaponAcc, EWeaponP
 			{
 			case EWeaponAccType::E_Muzzle:
 			{
-				AccOwnerWeapon->UpdateMuzzle(ItemWeaponAcc);
+				//AccOwnerWeapon->UpdateMuzzle(ItemWeaponAcc);
 			}
 			break;
 			case EWeaponAccType::E_Mag:
 			{
-				AccOwnerWeapon->UpdateMag(ItemWeaponAcc);
+				//AccOwnerWeapon->UpdateMag(ItemWeaponAcc);
 			}
 			break;
 			default:
