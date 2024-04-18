@@ -84,7 +84,7 @@ Content/Marketplace*
 #Content/Particles*
 Content/StarterContent*
 #Content/VehicleVarietyPack*
-Plugins/*
+#Plugins/*
 A_Surface_Footstep*
 M5VFXVOL2*
 Content/Assets/Maps*
