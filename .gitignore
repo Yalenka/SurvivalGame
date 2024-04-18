@@ -91,7 +91,7 @@ Content/Assets/Maps*
 Content/Assets/Audio*
 Content/Assets/Others*
 Content/Assets/Particles*
-Content/Assets/SafeZone*
-Content/Assets/UI*
+#Content/Assets/SafeZone*
+#Content/Assets/UI*
 
 #SurvivalGame.uproject
