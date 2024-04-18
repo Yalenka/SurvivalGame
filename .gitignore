@@ -72,3 +72,26 @@ Plugins/*/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+#Custom Directories
+!Content/
+#Content/Animations*
+#Content/Audio*
+Content/Developers*
+Content/LandscapeMountains*
+Content/Marketplace*
+#Content/Meshes*
+#Content/Particles*
+Content/StarterContent*
+#Content/VehicleVarietyPack*
+Plugins/*
+A_Surface_Footstep*
+M5VFXVOL2*
+Content/Assets/Maps*
+Content/Assets/Audio*
+Content/Assets/Others*
+Content/Assets/Particles*
+Content/Assets/SafeZone*
+Content/Assets/UI*
+
+SurvivalGame.uproject
