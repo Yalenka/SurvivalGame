@@ -82,7 +82,7 @@ Content/LandscapeMountains*
 Content/Marketplace*
 #Content/Meshes*
 #Content/Particles*
-Content/StarterContent*
+#Content/StarterContent*
 #Content/VehicleVarietyPack*
 #Plugins/*
 A_Surface_Footstep*
