@@ -95,3 +95,5 @@ Content/Assets/SafeZone*
 #Content/Assets/UI*
 
 SurvivalGame.uproject
+/Content/Maps
+*.umap
