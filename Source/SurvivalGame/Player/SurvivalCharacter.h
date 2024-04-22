@@ -542,20 +542,28 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_SwitchToSecondaryWeapon();
 
-
-	/**These should never be called directly - UGearItem call these on top of EquipItem*/
-	void EquipAcc(class UAccItem* Acc);
-	void UnEquipAcc(const EEquippableSlot Slot, class UAccItem* Acc);
-
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_EquipAccessories(class UItem* ItemBase, bool bFronGround, class AWeapon* Weapon);
-	//This will be called in blueprints, the input data will be given in real time
-	//when the weapon widget will be valid and and acc object is dragged in UI
 	UFUNCTION(BlueprintCallable)
-	bool EquipAccessories(class UItem* ItemBase, bool bFromGround, class AWeapon* Weapon);
+	bool RemoveAccessory(class UItem* ItemAcc, bool bIsToGround, AWeapon* Weapon);
+	UFUNCTION(Server, Reliable)
+	void ServerRemoveAccessory(class UItem* ItemAcc, bool bIsToGround, AWeapon* Weapon);
+	UFUNCTION(Server, Reliable)
+	void MulticastRemoveAccessory(class UItem* ItemAcc, bool bIsToGround, AWeapon* Weapon);
+
 	void UpdateWeaponAcc(class UAccItem* ItemWeaponAcc, EWeaponPosition Position, EWeaponAccType AccType);
-	UPROPERTY(BlueprintReadOnly, Replicated)
-	class AWeapon* AccOwnerWeapon;
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_UpdateWeaponAcc(class UAccItem* AccItemObject, EWeaponPosition Position, EWeaponAccType AccType);
+
+	UPROPERTY(Replicated, BlueprintReadWrite)
+	class AWeapon* AccOwnerWeapon = nullptr;
+	UPROPERTY(Replicated, BlueprintReadWrite)
+	class UAccItem* AccReplacedObject = nullptr;
+	UFUNCTION(BlueprintCallable)
+	bool SetEquipAccessoriesData(class UItem* ItemBase, bool bFronGround, class AWeapon* Weapon);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetEquipAccessoriesData(class UItem* ItemBase, bool bFronGround, class AWeapon* Weapon);
+	UFUNCTION(Server, Reliable)
+	void Server_SetEquipAccessoriesData(class UItem* ItemBase, bool bFronGround, class AWeapon* Weapon);
+
 
 	/**Used to store the primary weapon as ready equipped weapon to make it ready to switch*/
 	UPROPERTY(Replicated)

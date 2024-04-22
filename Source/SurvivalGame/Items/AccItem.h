@@ -6,9 +6,6 @@
 #include "EquippableItem.h"
 #include "AccItem.generated.h"
 
-/**
- * 
- */
 UCLASS(Blueprintable)
 class SURVIVALGAME_API UAccItem : public UEquippableItem
 {
@@ -17,30 +14,27 @@ class SURVIVALGAME_API UAccItem : public UEquippableItem
 public:
 
 	//Acc type, mag, muzzle, sight etc
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item Extras")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Data")
 	EWeaponAccType AccType;
 
 	//ID's of weapons which will support this acc item
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components|Weapon Accessories")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Data")
 	TArray<FName> WeaponIDs;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components|Weapon Accessories")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data")
 	class UStaticMesh* AccMesh;
 
 	//Defining the socket name for the item to be attached
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Weapon Accessories")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
 	FName AttachmentSocket;
 
 	//Muzzle Related
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components|Weapon Accessories")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Data")
 	bool IsSuppressor;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components|Weapon Accessories")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Data")
 	bool bCanFlash;
 
 	//Mag Related
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Weapon Accessories")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Data")
 	float ClipRate;
-
-	virtual bool Equip(class ASurvivalCharacter* Character) override;
-	virtual bool UnEquip(class ASurvivalCharacter* Character) override;
 };

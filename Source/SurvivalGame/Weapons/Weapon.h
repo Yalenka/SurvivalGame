@@ -266,7 +266,7 @@ public:
 	class UAccItem* AccMagObject;
 	UPROPERTY(BlueprintReadOnly)
 	class UAccItem* AccMuzzleObject;
-	void UpdateMag(class UAccItem* MagObject, UStaticMeshComponent* Accmesh);
+	void UpdateMag(class UAccItem* MagObject);
 	//The mesh to have equipped if we dont have an item equipped - ie the bare skin meshes
 	UPROPERTY(BlueprintReadOnly, Category = Mesh)
 	TMap<EEquippableSlot, UStaticMesh*> DefaultAccMeshes;
@@ -287,6 +287,10 @@ public:
 	class UStaticMeshComponent* GetSlotStaticmeshComponents(const EEquippableSlot Slot);
 
 protected:
+
+	/** Used to define if suppressor is active*/
+	UPROPERTY(EditDefaultsOnly, Category = Sound)
+	bool bSuppressor = false;
 
 	/** Adjustment to handle frame rate affecting actual timer interval. */
 	UPROPERTY(Transient)

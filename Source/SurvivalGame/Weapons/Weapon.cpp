@@ -37,14 +37,16 @@ AWeapon::AWeapon()
 	RootComponent = WeaponMesh;
 
 
-	MagMesh = WeaponAccMeshes.Add(EEquippableSlot::EIS_Muzzle, CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MagMesh")));
+	//MagMesh = WeaponAccMeshes.Add(EEquippableSlot::EIS_Muzzle, CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MagMesh")));
+	MagMesh =  CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MagMesh"));
 	MagMesh->bReceivesDecals = false;
 	MagMesh->SetCollisionObjectType(ECC_WorldDynamic);
 	MagMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MagMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
 	MagMesh->SetupAttachment(RootComponent, TEXT("SocketMuzzle"));
 
-	MuzzleMesh = WeaponAccMeshes.Add(EEquippableSlot::EIS_Mag, CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MuzzleMesh")));
+	//MuzzleMesh = WeaponAccMeshes.Add(EEquippableSlot::EIS_Mag, CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MuzzleMesh")));
+	MuzzleMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MuzzleMesh"));
 	MuzzleMesh->bReceivesDecals = false;
 	MuzzleMesh->SetCollisionObjectType(ECC_WorldDynamic);
 	MuzzleMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -514,39 +516,42 @@ float AWeapon::GetEquipDuration() const
 	return EquipDuration;
 }
 
-void AWeapon::UpdateMag(class UAccItem* MagObject, UStaticMeshComponent* Accmesh)
+void AWeapon::UpdateMag(class UAccItem* MagObject)
 {
-	if (!MagObject || !Accmesh) { return; }
-	AccMagObject = MagObject;
-	if (IsValid(WeaponItemClass))
+	if (!IsValid(WeaponItemClass))
 	{
-		if (UWeaponItem* Datas = WeaponItemClass.GetDefaultObject())
-		{
-			if (AccMagObject && AccMagObject->AccMesh != nullptr)
-			{
-				Accmesh->SetStaticMesh(AccMagObject->AccMesh);
-				Accmesh->AttachToComponent(WeaponMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true), FName(TEXT("SocketMag")));
-				return;
-			}
-		}
+		return;
+	}
+
+	AccMagObject = MagObject;
+	UWeaponItem* Datas = WeaponItemClass.GetDefaultObject();
+
+	if (AccMagObject == nullptr && Datas->DefaultMag != nullptr)
+	{
+		MagMesh->SetStaticMesh(Datas->DefaultMag);
+		MagMesh->AttachToComponent(WeaponMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true), FName(TEXT("SocketMag")));
+	}
+	else if (AccMagObject && AccMagObject->AccMesh != nullptr)
+	{
+		MagMesh->SetStaticMesh(AccMagObject->AccMesh);
+		MagMesh->AttachToComponent(WeaponMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true), AccMagObject->AttachmentSocket);
 	}
 }
 
 void AWeapon::UpdateMuzzle(class UAccItem* MuzzleObject)
 {
+	if (!IsValid(WeaponItemClass)) { return; }
 	AccMuzzleObject = MuzzleObject;
-	if (IsValid(WeaponItemClass))
+	if (AccMuzzleObject && AccMuzzleObject->AccMesh != nullptr)
 	{
-		if (UWeaponItem* Datas = WeaponItemClass.GetDefaultObject())
-		{
-			if (AccMuzzleObject && AccMuzzleObject->AccMesh != nullptr)
-			{
-				MuzzleMesh->SetStaticMesh(AccMuzzleObject->AccMesh);
-				if (!MuzzleMesh) { return; }
-				MuzzleMesh->AttachToComponent(WeaponMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true), FName(AccMuzzleObject->AttachmentSocket));
-				return;
-			}
-		}
+		MuzzleMesh->SetStaticMesh(AccMuzzleObject->AccMesh);
+		MuzzleMesh->AttachToComponent(WeaponMesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::KeepWorld, EAttachmentRule::KeepWorld, true), AccMuzzleObject->AttachmentSocket);
+		bSuppressor = AccMuzzleObject->IsSuppressor;
+	}
+	else
+	{
+		MuzzleMesh->SetStaticMesh(nullptr);
+		bSuppressor = false;
 	}
 }
 

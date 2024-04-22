@@ -398,11 +398,11 @@ void ASurvivalCharacter::UnEquipGear(const EEquippableSlot Slot)
 			EquippableMesh->SetSkeletalMesh(BodyMesh);
 
 			//Put the materials back on the body mesh (Since gear may have applied a different material)
-			for (int32 i = 0; i < BodyMesh->Materials.Num(); ++i)
+			for (int32 i = 0; i < BodyMesh->GetMaterials().Num(); ++i)
 			{
-				if (BodyMesh->Materials.IsValidIndex(i))
+				if (BodyMesh->GetMaterials().IsValidIndex(i))
 				{
-					EquippableMesh->SetMaterial(i, BodyMesh->Materials[i].MaterialInterface);
+					EquippableMesh->SetMaterial(i, BodyMesh->GetMaterials()[i].MaterialInterface);
 				}
 			}
 		}
@@ -1222,166 +1222,211 @@ void ASurvivalCharacter::SwitchToSecondaryWeapon()
 	}
 }
 
-void ASurvivalCharacter::EquipAcc(class UAccItem* Acc)
+bool ASurvivalCharacter::RemoveAccessory(class UItem* ItemAcc, bool bIsToGround, AWeapon* Weapon)
 {
-	if (AccOwnerWeapon)
+	if (!HasAuthority())
 	{
-		if (UStaticMeshComponent* Accmesh = AccOwnerWeapon->GetSlotStaticmeshComponents(Acc->Slot))
-		{
-			switch (Acc->Slot)
-			{
-			default:
-				break;
-			case EEquippableSlot::EIS_Mag:
-			{
-				AccOwnerWeapon->UpdateMag(Acc, Accmesh);
-			}
-			break;
-			}
-		}
+		ServerRemoveAccessory(ItemAcc, bIsToGround, Weapon);
+		return false;
 	}
-}
-
-void ASurvivalCharacter::UnEquipAcc(const EEquippableSlot Slot, class UAccItem* Acc)
-{
-	if (UStaticMeshComponent* AccMesh = AccOwnerWeapon->GetSlotStaticmeshComponents(Slot))
+	if (bIsToGround)
 	{
-		if (UStaticMesh* DefaultAccMesh = *AccOwnerWeapon->DefaultAccMeshes.Find(Slot))
-		{
-			AccMesh->SetStaticMesh(DefaultAccMesh);
-		}
-		else
-		{
-			if (UWeaponItem* Datas = AccOwnerWeapon->WeaponItemClass.GetDefaultObject())
-			{
-				if (Datas->DefaultMag != nullptr)
-				{
-					switch (Acc->AccType)
-					{
-					default:
-						break;
-					case EWeaponAccType::E_Mag:
-						/**
-						 * If the weapon comes with mudular parts, it will have a default mag which will need to be attached if the current mag unequipped
-						 */
+		//APickupBase* PUItem = SpawnPickupItems(ItemAcc);
+		DropItem(ItemAcc, ItemAcc->GetQuantity());
 
-						//AccMesh->SetStaticMesh(Datas->DefaultMag);
-						break;
+		UAccItem* ItemAccCastToIWA = Cast<UAccItem>(ItemAcc);
+		EWeaponAccType SlotType = ItemAccCastToIWA->AccType;
+		if (ItemAccCastToIWA)
+		{
+			UpdateWeaponAcc(nullptr, Weapon->Position, ItemAccCastToIWA->AccType);
+			//ItemAcc->Destroy();
+		}
+
+	}
+	else
+	{
+		MulticastRemoveAccessory(ItemAcc, bIsToGround, Weapon);
+		if (ItemAcc)
+		{
+			if (HasAuthority())
+			{
+				UAccItem* ItemAccCastToIWA = Cast<UAccItem>(ItemAcc);
+				if (ItemAccCastToIWA)
+				{
+					UpdateWeaponAcc(nullptr, Weapon->Position, ItemAccCastToIWA->AccType);
+					//GetPlayerInventory()->TryAddItem(ItemAcc);
+					if (ItemAcc)
+					{
+						ItemAcc->ConditionalBeginDestroy();
 					}
+					return true;
 				}
 			}
 		}
-		//For some acc like muzzle, grip there is no naked mesh
 	}
-}
 
-void ASurvivalCharacter::Server_EquipAccessories_Implementation(class UItem* ItemBase, bool bFronGround, class AWeapon* Weapon)
-{
-	EquipAccessories(ItemBase, bFronGround, Weapon);
-}
 
-bool ASurvivalCharacter::EquipAccessories(class UItem* ItemBase, bool bFromGround, class AWeapon* Weapon)
-{
-	if (!HasAuthority()) { Server_EquipAccessories( ItemBase, bFromGround, Weapon); return false; }
-	if (IsValid(Weapon))
-	{
-		if (ItemBase)
-		{
-			UAccItem* ItemWeaponAcc = Cast<UAccItem>(ItemBase);
-			EWeaponAccType AccType = ItemWeaponAcc->AccType;
-			UAccItem* ReplacedAccObject = nullptr;
-
-			switch (AccType)
-			{
-			case EWeaponAccType::E_Muzzle:
-			{
-				ReplacedAccObject = Weapon->AccMuzzleObject;
-			}
-				break;
-			case EWeaponAccType::E_Mag:
-			{
-				ReplacedAccObject = Weapon->AccMagObject;
-			}
-				break;
-			default:
-				break;
-			}
-			UpdateWeaponAcc(ItemWeaponAcc, Weapon->Position, ItemWeaponAcc->AccType);
-		}
-	}
 	return false;
+}
+
+void ASurvivalCharacter::MulticastRemoveAccessory_Implementation(class UItem* ItemAcc, bool bIsToGround, AWeapon* Weapon)
+{
+	UAccItem* AccItemObject = Cast<UAccItem>(ItemAcc);
+	switch (AccItemObject->AccType)
+	{
+	case EWeaponAccType::E_None:
+	break;
+	case EWeaponAccType::E_Sight:
+	{
+		//Weapon->UpdateSight(nullptr);
+	}
+	break;
+	case EWeaponAccType::E_Muzzle:
+	{
+		Weapon->UpdateMuzzle(nullptr);
+	}
+	break;
+	case EWeaponAccType::E_Mag:
+	{
+		Weapon->UpdateMag(nullptr);
+	}
+	break;
+	default:
+		break;
+	}
+	AccItemObject->SetEquipped(false);
+	if (ItemAcc)
+	{
+		ItemAcc->ConditionalBeginDestroy();
+	}
+	bool bCheckValid = AccItemObject ? 1 : 0;
+	OnWeaponAccChanged.Broadcast(Weapon, !bCheckValid, AccItemObject, AccItemObject->AccType);
+}
+
+void ASurvivalCharacter::ServerRemoveAccessory_Implementation(class UItem* ItemAcc, bool bIsToGround, AWeapon* Weapon)
+{
+	RemoveAccessory(ItemAcc, bIsToGround, Weapon);
 }
 
 void ASurvivalCharacter::UpdateWeaponAcc(class UAccItem* ItemWeaponAcc, EWeaponPosition Position, EWeaponAccType AccType)
 {
-	if (ItemWeaponAcc)
+	if (HasAuthority())
 	{
-		switch (Position)
+		Multicast_UpdateWeaponAcc(ItemWeaponAcc, Position, AccType);
+	}
+}
+
+void ASurvivalCharacter::Multicast_UpdateWeaponAcc_Implementation(class UAccItem* AccItemObject, EWeaponPosition Position, EWeaponAccType AccType)
+{
+	if (AccItemObject)
+	{
+		switch (AccOwnerWeapon->Position)
 		{
 		case EWeaponPosition::E_Left:
 		{
-			if (IsValid(GetPrimaryWeapon()))
+			switch (AccType)
 			{
-				AccOwnerWeapon = GetPrimaryWeapon();
-				print("PrimaryGun want to update");
+			case EWeaponAccType::E_Mag:
+			{
+				AccOwnerWeapon->UpdateMag(AccItemObject);
+				AccItemObject->SetEquipped(true);
 			}
-			else
+			break;
+			case EWeaponAccType::E_Muzzle:
 			{
-				AccOwnerWeapon = GetHoldWeapon();
-				print("HoldGun want to update");
+				AccOwnerWeapon->UpdateMuzzle(AccItemObject);
+				AccItemObject->SetEquipped(true);
+			}
+			break;
 			}
 		}
 		break;
 		case EWeaponPosition::E_Right:
 		{
-			if (IsValid(GetSecondaryWeapon()))
+			switch (AccType)
 			{
-				AccOwnerWeapon = GetSecondaryWeapon();
-				print("SecondaryGun want to update");
+			case EWeaponAccType::E_Mag:
+			{
+				AccOwnerWeapon->UpdateMag(AccItemObject);
+				AccItemObject->SetEquipped(true);
 			}
-			else
+			break;
+			case EWeaponAccType::E_Muzzle:
 			{
-				AccOwnerWeapon = GetHoldWeapon();
-				print("GetHoldGun want to update");
+				AccOwnerWeapon->UpdateMuzzle(AccItemObject);
+				AccItemObject->SetEquipped(true);
+			}
+			break;
 			}
 		}
 		break;
 		default:
 			break;
 		}
-		if (IsValid(AccOwnerWeapon))
-		{
-			switch (AccType)
-			{
-			case EWeaponAccType::E_Muzzle:
-			{
-				//AccOwnerWeapon->UpdateMuzzle(ItemWeaponAcc);
-			}
-			break;
-			case EWeaponAccType::E_Mag:
-			{
-				//AccOwnerWeapon->UpdateMag(ItemWeaponAcc);
-			}
-			break;
-			default:
-				break;
-
-
-				bool bCheckValid = 0;
-				if (ItemWeaponAcc) {
-					bCheckValid = 1;
-				}
-				else {
-					bCheckValid = 0;
-				}
-
-				//GetEquippedItems().Add(ItemWeaponAcc->Slot, ItemWeaponAcc);
-				//OnEquippedItemsChanged.Broadcast(ItemWeaponAcc->Slot, ItemWeaponAcc);
-				OnWeaponAccChanged.Broadcast(AccOwnerWeapon, !bCheckValid, ItemWeaponAcc, AccType);
-			}
-		}
+		bool bCheckValid = AccItemObject ? 1 : 0;
+		OnWeaponAccChanged.Broadcast(AccOwnerWeapon, !bCheckValid, AccItemObject, AccType);
+		print("Acc Updates");
 	}
 }
+
+bool ASurvivalCharacter::SetEquipAccessoriesData(class UItem* ItemBase, bool bFronGround, class AWeapon* Weapon)
+{
+	if (HasAuthority())
+	{
+		if (IsValid(Weapon))
+		{
+			Multicast_SetEquipAccessoriesData(ItemBase, bFronGround, Weapon);
+
+			AccOwnerWeapon = Weapon;
+			//Setting the replace acc object in advance and, and send it to inventory on the next acc equip if the slot is already full.
+			if (ItemBase)
+			{
+				UAccItem* AccItemObject = Cast<UAccItem>(ItemBase);
+				EWeaponAccType AccType = AccItemObject->AccType;
+
+				switch (AccType)
+				{
+				case EWeaponAccType::E_Muzzle:
+				{
+					AccReplacedObject = AccOwnerWeapon->AccMuzzleObject;
+				}
+				break;
+				case EWeaponAccType::E_Mag:
+				{
+					AccReplacedObject = AccOwnerWeapon->AccMagObject;
+				}
+				break;
+
+				}
+				//Sending adding replacement item to inventory from weapon slot
+				if (AccReplacedObject)
+				{
+					PlayerInventory->TryAddItem(AccReplacedObject);
+				}
+
+				//Updating UI and giving information to UI to set the weapon acc objects determination of validity
+				UpdateWeaponAcc(AccItemObject, AccOwnerWeapon->Position, AccItemObject->AccType);
+			}
+			return true;
+		}
+	}
+	else
+	{
+		Server_SetEquipAccessoriesData(ItemBase, bFronGround, Weapon);
+	}
+	return false;
+}
+
+void ASurvivalCharacter::Server_SetEquipAccessoriesData_Implementation(class UItem* ItemBase, bool bFronGround, class AWeapon* Weapon)
+{
+	SetEquipAccessoriesData(ItemBase, bFronGround, Weapon);
+}
+
+void ASurvivalCharacter::Multicast_SetEquipAccessoriesData_Implementation(class UItem* ItemBase, bool bFronGround, class AWeapon* Weapon)
+{
+	AccOwnerWeapon = Weapon;
+}
+
 void ASurvivalCharacter::Server_SwitchToSecondaryWeapon_Implementation()
 {
 	SwitchToSecondaryWeapon();
