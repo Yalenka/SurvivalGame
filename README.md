@@ -8,5 +8,8 @@ can only be used in your open source projects. Commercial companies and for comm
 # Multiplayer
 Steam Support Listen/Dedicated server updated
 
+#About this Project
+This is the Extended versoin of C++ SurvivalGame Project with more features
+
 # Course Copyright Author
-SurvivalGame Project - The Unreal C++ Survival Game Course - Copyright Reuben Ward 2020
+The Unreal C++ Survival Game Course - Copyright Reuben Ward 2020
